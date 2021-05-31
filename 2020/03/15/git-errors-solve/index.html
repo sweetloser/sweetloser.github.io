@@ -88,7 +88,7 @@
 <meta property="og:description" content="问题1报错信息1fatal: refusing to merge unrelated histories  出错原因1、在g本地使用git init创建了仓库；123$ mkdir Demo$ cd Demo$ git init  2、在github上创建了远程仓库； 3、本地仓库添加了文件；4、提交代码；12$ git add .&#x2F;$ git commit -m &amp;quot;message&amp;qu">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https:&#x2F;&#x2F;www.sweetloser.com&#x2F;2020&#x2F;03&#x2F;15&#x2F;git-errors-solve&#x2F;1.png">
-<meta property="og:updated_time" content="2020-03-15T16:16:40.957Z">
+<meta property="og:updated_time" content="2021-02-21T03:01:21.547Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https:&#x2F;&#x2F;www.sweetloser.com&#x2F;2020&#x2F;03&#x2F;15&#x2F;git-errors-solve&#x2F;1.png">
 
@@ -346,7 +346,7 @@
                   <span class="post-meta-item-text">字数统计&#58;</span>
                 
                 <span title="字数统计">
-                  308 字
+                  401 字
                 </span>
               
 
@@ -409,6 +409,14 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git pull orinin master --allow-unrelated-histories</span><br></pre></td></tr></table></figure>
 
 <p>该选项可以合并两个独立仓库的历史。</p>
+<h4 id="问题-2"><a href="#问题-2" class="headerlink" title="问题 2"></a>问题 2</h4><p>将本地仓库和远程仓库退回到指定版本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git reset --hard [指定的提交版本sha1值]</span><br></pre></td></tr></table></figure>
+
+<p>执行完命令后你会发现你的本地已经回退到指定的版本了，如果你是想远程仓库也回退，可以将本次执行结果强制推送到远程仓库。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push -f -u origin master</span><br></pre></td></tr></table></figure>
+
+
+
 
       
     </div>
@@ -448,6 +456,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/05/31/hook-block/" rel="prev" title="iOS面试 ———— Hook Block">
+                iOS面试 ———— Hook Block <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -527,7 +539,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-count">25</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -592,7 +604,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#问题1"><span class="nav-number">1.</span> <span class="nav-text">问题1</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#报错信息"><span class="nav-number">1.1.</span> <span class="nav-text">报错信息</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#出错原因"><span class="nav-number">1.2.</span> <span class="nav-text">出错原因</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#1、在g本地使用git-init创建了仓库；"><span class="nav-number">1.2.1.</span> <span class="nav-text">1、在g本地使用git init创建了仓库；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#2、在github上创建了远程仓库；"><span class="nav-number">1.2.2.</span> <span class="nav-text">2、在github上创建了远程仓库；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3、本地仓库添加了文件；"><span class="nav-number">1.2.3.</span> <span class="nav-text">3、本地仓库添加了文件；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#4、提交代码；"><span class="nav-number">1.2.4.</span> <span class="nav-text">4、提交代码；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#5、为本地仓库添加git仓库作为远程仓库；"><span class="nav-number">1.2.5.</span> <span class="nav-text">5、为本地仓库添加git仓库作为远程仓库；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#6、pull远程仓库到本地（可能创建仓库时创建了readme文件。需要同步，再push）"><span class="nav-number">1.2.6.</span> <span class="nav-text">6、pull远程仓库到本地（可能创建仓库时创建了readme文件。需要同步，再push）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#7、解决办法"><span class="nav-number">1.2.7.</span> <span class="nav-text">7、解决办法</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#问题1"><span class="nav-number">1.</span> <span class="nav-text">问题1</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#报错信息"><span class="nav-number">1.1.</span> <span class="nav-text">报错信息</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#出错原因"><span class="nav-number">1.2.</span> <span class="nav-text">出错原因</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#1、在g本地使用git-init创建了仓库；"><span class="nav-number">1.2.1.</span> <span class="nav-text">1、在g本地使用git init创建了仓库；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#2、在github上创建了远程仓库；"><span class="nav-number">1.2.2.</span> <span class="nav-text">2、在github上创建了远程仓库；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3、本地仓库添加了文件；"><span class="nav-number">1.2.3.</span> <span class="nav-text">3、本地仓库添加了文件；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#4、提交代码；"><span class="nav-number">1.2.4.</span> <span class="nav-text">4、提交代码；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#5、为本地仓库添加git仓库作为远程仓库；"><span class="nav-number">1.2.5.</span> <span class="nav-text">5、为本地仓库添加git仓库作为远程仓库；</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#6、pull远程仓库到本地（可能创建仓库时创建了readme文件。需要同步，再push）"><span class="nav-number">1.2.6.</span> <span class="nav-text">6、pull远程仓库到本地（可能创建仓库时创建了readme文件。需要同步，再push）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#7、解决办法"><span class="nav-number">1.2.7.</span> <span class="nav-text">7、解决办法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#问题-2"><span class="nav-number">2.</span> <span class="nav-text">问题 2</span></a></li></ol></div>
             
 
           </div>
@@ -612,7 +624,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
@@ -626,7 +638,7 @@
     
       <span class="post-meta-item-text">Site words total count&#58;</span>
     
-    <span title="Site words total count">31.2k</span>
+    <span title="Site words total count">32.3k</span>
   
 </div>
 
