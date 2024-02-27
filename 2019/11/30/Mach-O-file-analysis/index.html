@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS逆向," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="介绍Mach-o文件是MacOS和iOS上的可执行文件。其格式如下图所示：  用Mach-o分析工具（MachOView ）查看，其界面如下：  header结合apple源码来看。  如果是多架构fat文件，文件的头部定义为：  1234567891011121314struct fat_header &amp;#123;	uint32_t	magic;		&#x2F;* FAT_MAGIC *&#x2F;	uint32_">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mach-o文件解析">
+<meta property="og:url" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="介绍Mach-o文件是MacOS和iOS上的可执行文件。其格式如下图所示：  用Mach-o分析工具（MachOView ）查看，其界面如下：  header结合apple源码来看。  如果是多架构fat文件，文件的头部定义为：  1234567891011121314struct fat_header &amp;#123;	uint32_t	magic;		&#x2F;* FAT_MAGIC *&#x2F;	uint32_">
+<meta property="og:locale">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/1.jpg">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/2.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/3.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/4.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/5.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/6.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/7.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/8.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/9.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/10.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/11.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/12.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/13.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/14.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/15.png">
+<meta property="article:published_time" content="2019-11-30T12:29:12.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.489Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS逆向">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/1.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/"/>
+
+
+
+
+
+  <title>Mach-o文件解析 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2019/11/30/Mach-O-file-analysis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Mach-o文件解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-11-30T20:29:12+08:00">
+                2019-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/11/30/Mach-O-file-analysis/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/11/30/Mach-O-file-analysis/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  2.1k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  10 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p>Mach-o文件是MacOS和iOS上的可执行文件。其格式如下图所示：</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/1.jpg" alt="1"></p>
+<p>用Mach-o分析工具（<a target="_blank" rel="noopener" href="https://sourceforge.net/projects/machoview/">MachOView</a> ）查看，其界面如下：</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/2.png" alt="2"></p>
+<h5 id="header"><a href="#header" class="headerlink" title="header"></a>header</h5><p>结合<a target="_blank" rel="noopener" href="https://opensource.apple.com/source/xnu/xnu-2050.18.24/EXTERNAL_HEADERS/mach-o/fat.h">apple源码</a>来看。</p>
+<ul>
+<li>如果是多架构fat文件，文件的头部定义为：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">fat_header</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span>	magic;		<span class="comment">/* FAT_MAGIC */</span></span><br><span class="line">	<span class="type">uint32_t</span>	nfat_arch;	<span class="comment">/* number of structs that follow */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">fat_arch</span> &#123;</span></span><br><span class="line">	<span class="type">cpu_type_t</span>	cputype;	<span class="comment">/* cpu specifier (int) */</span></span><br><span class="line">	<span class="type">cpu_subtype_t</span>	cpusubtype;	<span class="comment">/* machine specifier (int) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	offset;		<span class="comment">/* file offset to this object file */</span></span><br><span class="line">	<span class="type">uint32_t</span>	size;		<span class="comment">/* size of this object file */</span></span><br><span class="line">	<span class="type">uint32_t</span>	align;		<span class="comment">/* alignment as a power of 2 */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>fat_header结构体的nfat_arch字段，标识了fat文件含有几个架构，而每个架构又由fat_arch结构体定义了文件偏移和架构类型，找到文件偏移之后，架构的结构和单架构是一样的，所以解析多架构文件和解析单架构文件，除了头部结构有区别，其他的都一样。</p>
+<ul>
+<li>如果是单架构Mach-o文件，其头部定义为：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The 32-bit mach header appears at the very beginning of the object file for</span></span><br><span class="line"><span class="comment"> * 32-bit architectures.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mach_header</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span>	magic;		<span class="comment">/* mach magic number identifier */</span></span><br><span class="line">	<span class="type">cpu_type_t</span>	cputype;	<span class="comment">/* cpu specifier */</span></span><br><span class="line">	<span class="type">cpu_subtype_t</span>	cpusubtype;	<span class="comment">/* machine specifier */</span></span><br><span class="line">	<span class="type">uint32_t</span>	filetype;	<span class="comment">/* type of file */</span></span><br><span class="line">	<span class="type">uint32_t</span>	ncmds;		<span class="comment">/* number of load commands */</span></span><br><span class="line">	<span class="type">uint32_t</span>	sizeofcmds;	<span class="comment">/* the size of all the load commands */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Constant for the magic field of the mach_header (32-bit architectures) */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_MAGIC	0xfeedface	<span class="comment">/* the mach magic number */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MH_CIGAM	0xcefaedfe	<span class="comment">/* NXSwapInt(MH_MAGIC) */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The 64-bit mach header appears at the very beginning of object files for</span></span><br><span class="line"><span class="comment"> * 64-bit architectures.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mach_header_64</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span>	magic;		<span class="comment">/* mach magic number identifier */</span></span><br><span class="line">	<span class="type">cpu_type_t</span>	cputype;	<span class="comment">/* cpu specifier */</span></span><br><span class="line">	<span class="type">cpu_subtype_t</span>	cpusubtype;	<span class="comment">/* machine specifier */</span></span><br><span class="line">	<span class="type">uint32_t</span>	filetype;	<span class="comment">/* type of file */</span></span><br><span class="line">	<span class="type">uint32_t</span>	ncmds;		<span class="comment">/* number of load commands */</span></span><br><span class="line">	<span class="type">uint32_t</span>	sizeofcmds;	<span class="comment">/* the size of all the load commands */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved;	<span class="comment">/* reserved */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>各个字段的含义，注释都标注的很清楚，就不再赘述。</p>
+<h5 id="load-command"><a href="#load-command" class="headerlink" title="load_command"></a>load_command</h5><p>在header之下，又有多个load_commad段。header的定义中，给出了Mach-o文件的load_commad数，以及所有段的大小（ncmds&#x2F;sizeofcmds）。load_command其结构体定义为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">load_command</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span> cmd;		<span class="comment">/* type of load command */</span></span><br><span class="line">	<span class="type">uint32_t</span> cmdsize;	<span class="comment">/* total size of command in bytes */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>如果你以为load_command的定义就两个字段那么简单，那你可就错了。每个load_command的cmd字段，标识了该load_command的类型。</p>
+<p>以下列出了cmd的所有类型以（代码来自<a target="_blank" rel="noopener" href="https://opensource.apple.com/source/xnu/xnu-2050.18.24/EXTERNAL_HEADERS/mach-o/loader.h">apple source</a>）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * After MacOS X 10.1 when a new load command is added that is required to be</span></span><br><span class="line"><span class="comment"> * understood by the dynamic linker for the image to execute properly the</span></span><br><span class="line"><span class="comment"> * LC_REQ_DYLD bit will be or&#x27;ed into the load command constant.  If the dynamic</span></span><br><span class="line"><span class="comment"> * linker sees such a load command it it does not understand will issue a</span></span><br><span class="line"><span class="comment"> * &quot;unknown load command required for execution&quot; error and refuse to use the</span></span><br><span class="line"><span class="comment"> * image.  Other load commands without this bit that are not understood will</span></span><br><span class="line"><span class="comment"> * simply be ignored.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_REQ_DYLD 0x80000000</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Constants for the cmd field of all load commands, the type */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SEGMENT	0x1	<span class="comment">/* segment of this file to be mapped */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SYMTAB	0x2	<span class="comment">/* link-edit stab symbol table info */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SYMSEG	0x3	<span class="comment">/* link-edit gdb symbol table info (obsolete) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_THREAD	0x4	<span class="comment">/* thread */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_UNIXTHREAD	0x5	<span class="comment">/* unix thread (includes a stack) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_LOADFVMLIB	0x6	<span class="comment">/* load a specified fixed VM shared library */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_IDFVMLIB	0x7	<span class="comment">/* fixed VM shared library identification */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_IDENT	0x8	<span class="comment">/* object identification info (obsolete) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_FVMFILE	0x9	<span class="comment">/* fixed VM file inclusion (internal use) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_PREPAGE      0xa     <span class="comment">/* prepage command (internal use) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_DYSYMTAB	0xb	<span class="comment">/* dynamic link-edit symbol table info */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_LOAD_DYLIB	0xc	<span class="comment">/* load a dynamically linked shared library */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_ID_DYLIB	0xd	<span class="comment">/* dynamically linked shared lib ident */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_LOAD_DYLINKER 0xe	<span class="comment">/* load a dynamic linker */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_ID_DYLINKER	0xf	<span class="comment">/* dynamic linker identification */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_PREBOUND_DYLIB 0x10	<span class="comment">/* modules prebound for a dynamically */</span></span></span><br><span class="line">				<span class="comment">/*  linked shared library */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_ROUTINES	0x11	<span class="comment">/* image routines */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SUB_FRAMEWORK 0x12	<span class="comment">/* sub framework */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SUB_UMBRELLA 0x13	<span class="comment">/* sub umbrella */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SUB_CLIENT	0x14	<span class="comment">/* sub client */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SUB_LIBRARY  0x15	<span class="comment">/* sub library */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_TWOLEVEL_HINTS 0x16	<span class="comment">/* two-level namespace lookup hints */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_PREBIND_CKSUM  0x17	<span class="comment">/* prebind checksum */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * load a dynamically linked shared library that is allowed to be missing</span></span><br><span class="line"><span class="comment"> * (all symbols are weak imported).</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_LOAD_WEAK_DYLIB (0x18 | LC_REQ_DYLD)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SEGMENT_64	0x19	<span class="comment">/* 64-bit segment of this file to be</span></span></span><br><span class="line"><span class="comment"><span class="meta">				   mapped */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_ROUTINES_64	0x1a	<span class="comment">/* 64-bit image routines */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_UUID		0x1b	<span class="comment">/* the uuid */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_RPATH       (0x1c | LC_REQ_DYLD)    <span class="comment">/* runpath additions */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_CODE_SIGNATURE 0x1d	<span class="comment">/* local of code signature */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_SEGMENT_SPLIT_INFO 0x1e <span class="comment">/* local of info to split segments */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_REEXPORT_DYLIB (0x1f | LC_REQ_DYLD) <span class="comment">/* load and re-export dylib */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_LAZY_LOAD_DYLIB 0x20	<span class="comment">/* delay load of dylib until first use */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_ENCRYPTION_INFO 0x21	<span class="comment">/* encrypted segment information */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_DYLD_INFO 	0x22	<span class="comment">/* compressed dyld information */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_DYLD_INFO_ONLY (0x22|LC_REQ_DYLD)	<span class="comment">/* compressed dyld information only */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_LOAD_UPWARD_DYLIB (0x23 | LC_REQ_DYLD) <span class="comment">/* load upward dylib */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_VERSION_MIN_MACOSX 0x24   <span class="comment">/* build for MacOSX min OS version */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_VERSION_MIN_IPHONEOS 0x25 <span class="comment">/* build for iPhoneOS min OS version */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_FUNCTION_STARTS 0x26 <span class="comment">/* compressed table of function start addresses */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_DYLD_ENVIRONMENT 0x27 <span class="comment">/* string for dyld to treat</span></span></span><br><span class="line"><span class="comment"><span class="meta">				    like environment variable */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_MAIN (0x28|LC_REQ_DYLD) <span class="comment">/* replacement for LC_UNIXTHREAD */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_DATA_IN_CODE 0x29 <span class="comment">/* table of non-instructions in __text */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_SOURCE_VERSION 0x2A <span class="comment">/* source version used to build binary */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LC_DYLIB_CODE_SIGN_DRS 0x2B <span class="comment">/* Code signing DRs copied from linked dylibs */</span></span></span><br></pre></td></tr></table></figure>
+
+<p>所有段的定义以及含义，注释的都比较清楚。这里，我们主要关注LC_SEGMENT_64（LC_SEGMENT）段。</p>
+<p>定义为该类型的段有：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span>    SEG_PAGEZERO    <span class="string">&quot;__PAGEZERO&quot;</span>	<span class="comment">/* the pagezero segment which has no */</span></span></span><br><span class="line">					<span class="comment">/* protections and catches NULL */</span></span><br><span class="line">					<span class="comment">/* references for MH_EXECUTE files */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>    SEG_TEXT    <span class="string">&quot;__TEXT&quot;</span>	<span class="comment">/* the tradition UNIX text segment */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>    SEG_DATA    <span class="string">&quot;__DATA&quot;</span>	<span class="comment">/* the tradition UNIX data segment */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>    SEG_OBJC    <span class="string">&quot;__OBJC&quot;</span>	<span class="comment">/* objective-C runtime segment */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>    SEG_LINKEDIT    <span class="string">&quot;__LINKEDIT&quot;</span> <span class="comment">/* the segment containing all structs */</span></span></span><br><span class="line">					<span class="comment">/* created and maintained by the link */</span></span><br><span class="line">					<span class="comment">/* editor.  Created with -seglinkedit */</span></span><br><span class="line">					<span class="comment">/* option to ld(1) for MH_EXECUTE and */</span></span><br><span class="line">					<span class="comment">/* FVMLIB file types only */</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="section"><a href="#section" class="headerlink" title="section"></a>section</h5><p>其中，SEG_TEXT以及SEG_DATA段中，又含有多个Section：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">section</span> &#123;</span> <span class="comment">/* for 32-bit architectures */</span></span><br><span class="line">	<span class="type">char</span>		sectname[<span class="number">16</span>];	<span class="comment">/* name of this section */</span></span><br><span class="line">	<span class="type">char</span>		segname[<span class="number">16</span>];	<span class="comment">/* segment this section goes in */</span></span><br><span class="line">	<span class="type">uint32_t</span>	addr;		<span class="comment">/* memory address of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	size;		<span class="comment">/* size in bytes of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	offset;		<span class="comment">/* file offset of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	align;		<span class="comment">/* section alignment (power of 2) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reloff;		<span class="comment">/* file offset of relocation entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	nreloc;		<span class="comment">/* number of relocation entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags (section type and attributes)*/</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved1;	<span class="comment">/* reserved (for offset or index) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved2;	<span class="comment">/* reserved (for count or sizeof) */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">section_64</span> &#123;</span> <span class="comment">/* for 64-bit architectures */</span></span><br><span class="line">	<span class="type">char</span>		sectname[<span class="number">16</span>];	<span class="comment">/* name of this section */</span></span><br><span class="line">	<span class="type">char</span>		segname[<span class="number">16</span>];	<span class="comment">/* segment this section goes in */</span></span><br><span class="line">	<span class="type">uint64_t</span>	addr;		<span class="comment">/* memory address of this section */</span></span><br><span class="line">	<span class="type">uint64_t</span>	size;		<span class="comment">/* size in bytes of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	offset;		<span class="comment">/* file offset of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	align;		<span class="comment">/* section alignment (power of 2) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reloff;		<span class="comment">/* file offset of relocation entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	nreloc;		<span class="comment">/* number of relocation entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags (section type and attributes)*/</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved1;	<span class="comment">/* reserved (for offset or index) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved2;	<span class="comment">/* reserved (for count or sizeof) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved3;	<span class="comment">/* reserved */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>下面介绍几个常见的section:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">__TEXT,__text:	代码区</span><br><span class="line">__TEXT,__cstring:	代码中定义的C字符串存放在这个节</span><br><span class="line">__TEXT,__stubs:	装载符号表的节，一般称之为桩</span><br><span class="line">__TEXT,__objc_classname:	OC类名</span><br><span class="line">__TEXT,__objc_methname:	OC方法名</span><br><span class="line">__DATA,__la_symbol_ptr:	懒加载符号表</span><br><span class="line">__DATA,__objc_classlist:	OC类列表</span><br></pre></td></tr></table></figure>
+
+<h4 id="代码分析Mach-o文件（class-dump的实现原理探析）"><a href="#代码分析Mach-o文件（class-dump的实现原理探析）" class="headerlink" title="代码分析Mach-o文件（class-dump的实现原理探析）"></a>代码分析Mach-o文件（class-dump的实现原理探析）</h4><p>从上面的分析过程，可以看出，多架构文件只是含有多个架构文件的fat文件。所以这里，直接用一个单架构的Mach-o文件解析。</p>
+<h5 id="MachOView-010-Editor分析"><a href="#MachOView-010-Editor分析" class="headerlink" title="MachOView + 010 Editor分析"></a>MachOView + 010 Editor分析</h5><h5 id="用MachOView大致浏览一下文件"><a href="#用MachOView大致浏览一下文件" class="headerlink" title="用MachOView大致浏览一下文件"></a>用MachOView大致浏览一下文件</h5><p><img src="/2019/11/30/Mach-O-file-analysis/3.png" alt="img3"></p>
+<h5 id="找到-DATA-objc-classlist节"><a href="#找到-DATA-objc-classlist节" class="headerlink" title="找到__DATA,__objc_classlist节"></a>找到<code>__DATA,__objc_classlist</code>节</h5><p><img src="/2019/11/30/Mach-O-file-analysis/4.png" alt="4"></p>
+<p>这里保存了所有类的指针，我们取第一个去查看：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">uintptr_t</span> cls_ptr = <span class="number">0x0000000100514468</span>;</span><br></pre></td></tr></table></figure>
+
+<h5 id="获取指针所对应的文件偏移"><a href="#获取指针所对应的文件偏移" class="headerlink" title="获取指针所对应的文件偏移"></a>获取指针所对应的文件偏移</h5><p>首先用010 Editor查看当前<code>__DATA,__objc_classlist</code>的起始地址和文件偏移</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/5.png" alt="5"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">uintptr_t</span> address = <span class="number">0x100429400</span>;</span><br><span class="line">uint32 offset = <span class="number">4363264</span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>一般地，虚拟地址—》文件偏移的公式为：文件偏移&#x3D;虚拟地址-当前section的起始地址+当前section的文件偏移。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uint32 cls_offset = <span class="number">0x0000000100514468</span><span class="number">-0x100429400</span>+<span class="number">4363264</span> = <span class="number">0x514468</span>;</span><br></pre></td></tr></table></figure>
+
+<p>经过计算，cls_ptr指针指向的就是文件的这个位置。</p>
+<p>在class-dump的源码中，对cls_ptr指针指向的位置进行了如下定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cd_objc2_class</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span> isa;</span><br><span class="line">    <span class="type">uint64_t</span> superclass;</span><br><span class="line">    <span class="type">uint64_t</span> cache;</span><br><span class="line">    <span class="type">uint64_t</span> vtable;</span><br><span class="line">    <span class="type">uint64_t</span> data; <span class="comment">// points to class_ro_t</span></span><br><span class="line">    <span class="type">uint64_t</span> reserved1;</span><br><span class="line">    <span class="type">uint64_t</span> reserved2;</span><br><span class="line">    <span class="type">uint64_t</span> reserved3;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>意味着0x514468处，存储的是<code>cd_objc2_class</code>结构体的数据。</p>
+<p>而这个结构体中的data，即为存储class数据的指针。</p>
+<h5 id="查看cd-objc2-class数据"><a href="#查看cd-objc2-class数据" class="headerlink" title="查看cd_objc2_class数据"></a>查看cd_objc2_class数据</h5><p><img src="/2019/11/30/Mach-O-file-analysis/6.png" alt="6"></p>
+<p>用MachOView查看文件偏移为0x514468的地方，可以看到，这个地址是<code>__DATA,__objc_data</code>的首地址，其中，0x00514488处，即为data指针的值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">uintptr_t</span> data = <span class="number">0x010042baa0</span>;</span><br></pre></td></tr></table></figure>
+
+<h5 id="获取data指针的文件偏移"><a href="#获取data指针的文件偏移" class="headerlink" title="获取data指针的文件偏移"></a>获取data指针的文件偏移</h5><p>和上面的一样，用010 Editor查看基地址和文件偏移</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/7.png" alt="7"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">uintptr_t</span> address = <span class="number">0x100514468</span>;</span><br><span class="line">uint32 offset = <span class="number">5325928</span>;</span><br></pre></td></tr></table></figure>
+
+<p>根据之前说的公式，可以算出:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">uint32 data_offset = <span class="number">0x010042baa0</span><span class="number">-0x100514468</span>+<span class="number">5325928</span> = <span class="number">0x0</span>x42BAA0;</span><br></pre></td></tr></table></figure>
+
+<p>在<code>cd_objc2_class</code>的定义中已经告诉了我们，data指针指向的是<code>class_ro_t</code>，所以0x0x42BAA0存储的应该是<code>class_ro_t</code>结构体的数据。</p>
+<p><code>class_ro_t</code>的定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cd_objc2_class_ro_t</span> &#123;</span></span><br><span class="line">    <span class="type">uint32_t</span> flags;</span><br><span class="line">    <span class="type">uint32_t</span> instanceStart;</span><br><span class="line">    <span class="type">uint32_t</span> instanceSize;</span><br><span class="line">    <span class="type">uint32_t</span> reserved; <span class="comment">// *** this field does not exist in the 32-bit version ***</span></span><br><span class="line">    <span class="type">uint64_t</span> ivarLayout;</span><br><span class="line">    <span class="type">uint64_t</span> name;</span><br><span class="line">    <span class="type">uint64_t</span> baseMethods;</span><br><span class="line">    <span class="type">uint64_t</span> baseProtocols;</span><br><span class="line">    <span class="type">uint64_t</span> ivars;</span><br><span class="line">    <span class="type">uint64_t</span> weakIvarLayout;</span><br><span class="line">    <span class="type">uint64_t</span> baseProperties;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h5 id="查看cd-objc2-class-ro-t数据"><a href="#查看cd-objc2-class-ro-t数据" class="headerlink" title="查看cd_objc2_class_ro_t数据"></a>查看<code>cd_objc2_class_ro_t</code>数据</h5><p><img src="/2019/11/30/Mach-O-file-analysis/8.png" alt="8"></p>
+<p>根据结构体的定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">name = <span class="number">0x01003d1cdc</span>;</span><br><span class="line">baseMethods = <span class="number">0x010042b670</span>;</span><br></pre></td></tr></table></figure>
+
+<p>用同样的方法，找到基地址和文件偏移</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/9.png" alt="9"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">uintptr_t</span> address = <span class="number">0x10042B1F8</span>;</span><br><span class="line">uint32 offset = <span class="number">4370936</span>;</span><br></pre></td></tr></table></figure>
+
+<p>计算name和baseMethods的文件偏移</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">name_offset = <span class="number">0x01003d1cdc</span><span class="number">-0x10042B1F8</span>+<span class="number">4370936</span> = <span class="number">0x3D1CDC</span>;</span><br><span class="line">baseMethods_offset = <span class="number">0x010042b670</span><span class="number">-0x10042B1F8</span>+<span class="number">4370936</span> = <span class="number">0x42B670</span>;</span><br></pre></td></tr></table></figure>
+
+<h5 id="查看name"><a href="#查看name" class="headerlink" title="查看name"></a>查看name</h5><p><img src="/2019/11/30/Mach-O-file-analysis/10.png" alt="10"></p>
+<p>name &#x3D; “WXShotSendPersonCardView”;</p>
+<h5 id="查看baseMethods"><a href="#查看baseMethods" class="headerlink" title="查看baseMethods"></a>查看baseMethods</h5><p><img src="/2019/11/30/Mach-O-file-analysis/11.png" alt="11"></p>
+<p>这个位置存储的就是类q的方法。</p>
+<p>其定义为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">method_t</span> &#123;</span></span><br><span class="line">		<span class="type">char</span> *sel;</span><br><span class="line">  	<span class="type">char</span> *type;</span><br><span class="line">  	<span class="type">void</span> *imp;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">method_list_t</span> &#123;</span></span><br><span class="line">    <span class="type">uint32_t</span> entsizeAndFlags;</span><br><span class="line">    <span class="type">uint32_t</span> count;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">method_t</span> <span class="title">first</span>[1];</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>method_list_t</code>的前八个字节存储的是<code>method_t</code>的大小和<code>method_t</code>的个数。</p>
+<p><code>method_t</code>的存储方式为：</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/12.png" alt="12"></p>
+<p>我们从0x42B670+0x8处，往下取三个指针：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sel = <span class="number">0x0100365c2f</span>;</span><br><span class="line">type = <span class="number">0x01003d6ced</span>;</span><br><span class="line">imp = <span class="number">0x010000587c</span>;</span><br></pre></td></tr></table></figure>
+
+<p>用上述公式计算出文件偏移：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sel_offset=<span class="number">0x0100365c2f</span><span class="number">-0x10042B1F8</span>+<span class="number">4370936</span> = <span class="number">0x365C2F</span>;</span><br><span class="line">type_offset=<span class="number">0x01003d6ced</span><span class="number">-0x10042B1F8</span>+<span class="number">4370936</span> = <span class="number">0x3D6CED</span>;</span><br><span class="line">imp_offset=<span class="number">0x010000587c</span><span class="number">-0x10042B1F8</span>+<span class="number">4370936</span> = <span class="number">0x587C</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看sel</li>
+</ul>
+<p><img src="/2019/11/30/Mach-O-file-analysis/13.png" alt="13"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sel = initWithCustomFrame:</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看type</li>
+</ul>
+<p><img src="/2019/11/30/Mach-O-file-analysis/14.png" alt="14"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">type = <span class="string">&quot;@48@0:8&#123;CGRect=&#123;CGPoint=dd&#125;&#123;CGSize=dd&#125;&#125;16&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看imp</li>
+</ul>
+<p>imp指向的是代码段，所以这里直接在ida上查看</p>
+<p><img src="/2019/11/30/Mach-O-file-analysis/15.png" alt="15"></p>
+<p>可以看出，该偏移正好对上<code>[WXShotSendPersonCardView initWithCustomFrame:]</code>的实现部分。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS%E9%80%86%E5%90%91/" rel="tag"><i class="fa fa-tag"></i> iOS逆向</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/28/isa-2/" rel="next" title="isa(二)">
+                <i class="fa fa-chevron-left"></i> isa(二)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/12/09/symbol-binds/" rel="prev" title="符号绑定的另一种打开方式">
+                符号绑定的另一种打开方式 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#header"><span class="nav-number">1.1.</span> <span class="nav-text">header</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#load-command"><span class="nav-number">1.2.</span> <span class="nav-text">load_command</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#section"><span class="nav-number">1.3.</span> <span class="nav-text">section</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90Mach-o%E6%96%87%E4%BB%B6%EF%BC%88class-dump%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E6%8E%A2%E6%9E%90%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">代码分析Mach-o文件（class-dump的实现原理探析）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#MachOView-010-Editor%E5%88%86%E6%9E%90"><span class="nav-number">2.1.</span> <span class="nav-text">MachOView + 010 Editor分析</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%94%A8MachOView%E5%A4%A7%E8%87%B4%E6%B5%8F%E8%A7%88%E4%B8%80%E4%B8%8B%E6%96%87%E4%BB%B6"><span class="nav-number">2.2.</span> <span class="nav-text">用MachOView大致浏览一下文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%89%BE%E5%88%B0-DATA-objc-classlist%E8%8A%82"><span class="nav-number">2.3.</span> <span class="nav-text">找到__DATA,__objc_classlist节</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E9%92%88%E6%89%80%E5%AF%B9%E5%BA%94%E7%9A%84%E6%96%87%E4%BB%B6%E5%81%8F%E7%A7%BB"><span class="nav-number">2.4.</span> <span class="nav-text">获取指针所对应的文件偏移</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8Bcd-objc2-class%E6%95%B0%E6%8D%AE"><span class="nav-number">2.5.</span> <span class="nav-text">查看cd_objc2_class数据</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96data%E6%8C%87%E9%92%88%E7%9A%84%E6%96%87%E4%BB%B6%E5%81%8F%E7%A7%BB"><span class="nav-number">2.6.</span> <span class="nav-text">获取data指针的文件偏移</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8Bcd-objc2-class-ro-t%E6%95%B0%E6%8D%AE"><span class="nav-number">2.7.</span> <span class="nav-text">查看cd_objc2_class_ro_t数据</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8Bname"><span class="nav-number">2.8.</span> <span class="nav-text">查看name</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8BbaseMethods"><span class="nav-number">2.9.</span> <span class="nav-text">查看baseMethods</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="ARM," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="A64中的条件执行在A64指令集中，有一些指令的执行是有条件的。有条件的执行的意思是：当条件判定为false时，PC往前执行，但是不会产生任何效果。（即当条件判定为false时，该指令相当于NOP）。 条件分支指令B.cond就是一个带条件的执行指令。条件代码以.为分隔符被追加在指令的后面，例如：B.EQ。 有一些根据Z条件标志位的条件分支指令，不能像它追加条件代码：  CBNZ CBZ TBNZ">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ARM文档翻译（二）----条件代码篇">
+<meta property="og:url" content="https://www.sweetloser.com/2019/12/15/Overview-of-AArch64-state-translation-2/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="A64中的条件执行在A64指令集中，有一些指令的执行是有条件的。有条件的执行的意思是：当条件判定为false时，PC往前执行，但是不会产生任何效果。（即当条件判定为false时，该指令相当于NOP）。 条件分支指令B.cond就是一个带条件的执行指令。条件代码以.为分隔符被追加在指令的后面，例如：B.EQ。 有一些根据Z条件标志位的条件分支指令，不能像它追加条件代码：  CBNZ CBZ TBNZ">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-12-15T08:39:00.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.559Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="ARM">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2019/12/15/Overview-of-AArch64-state-translation-2/"/>
+
+
+
+
+
+  <title>ARM文档翻译（二）----条件代码篇 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2019/12/15/Overview-of-AArch64-state-translation-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">ARM文档翻译（二）----条件代码篇</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-15T16:39:00+08:00">
+                2019-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ARM/" itemprop="url" rel="index">
+                    <span itemprop="name">ARM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/12/15/Overview-of-AArch64-state-translation-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/12/15/Overview-of-AArch64-state-translation-2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  1.8k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  6 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="A64中的条件执行"><a href="#A64中的条件执行" class="headerlink" title="A64中的条件执行"></a>A64中的条件执行</h4><p>在A64指令集中，有一些指令的执行是有条件的。有条件的执行的意思是：当条件判定为false时，PC往前执行，但是不会产生任何效果。（即当条件判定为false时，该指令相当于NOP）。</p>
+<p>条件分支指令<code>B.cond</code>就是一个带条件的执行指令。条件代码以<code>.</code>为分隔符被追加在指令的后面，例如：B.EQ。</p>
+<p>有一些根据<code>Z</code>条件标志位的条件分支指令，不能像它追加条件代码：</p>
+<ul>
+<li>CBNZ</li>
+<li>CBZ</li>
+<li>TBNZ</li>
+<li>TBZ</li>
+</ul>
+<p>还有一些A64指令是无条件执行的，但是使用条件代码序偶为源操作数。这些指令总是执行，但是操作取决于条件代码的值。这些指令可以分为以下几类：</p>
+<ul>
+<li>条件数据处理指令。例如：CSEL</li>
+<li>条件比较指令。例如：CCMN、CCMP</li>
+</ul>
+<p>在这些指令中，可以再最后的操作数位置指定条件代码。例如：CSEL Wd,Wm,Wn,NE</p>
+<h4 id="条件标志"><a href="#条件标志" class="headerlink" title="条件标志"></a>条件标志</h4><p>条件标志位N、Z、C、V保存在APSR中。</p>
+<p>标志位的设置和清除：</p>
+<p><strong>N</strong></p>
+<p>当操作结果为负数时，设置为1，否则为0。</p>
+<p><strong>Z</strong></p>
+<p>当操作结果为0时，设置为1，否则为0。</p>
+<p><strong>C</strong></p>
+<p>当操作结果发生进位或者减法结果无借位时，设置为1，否则设置为0。</p>
+<p><strong>V</strong></p>
+<p>当操作导致溢出时，设置为1，否则设置为0。</p>
+<p>C标志位在以下几种情况下将会被设置：</p>
+<ul>
+<li>对于加法，包括比较指令CMN，如果加法产生进位（无符号溢出），则C被设置为1，否则设置为0。</li>
+<li>对于减法，包括比较指令CMP，如果减法产生一个借位（无符号下溢），则C被设置为1，否则设置为0。</li>
+<li>对于包含移位操作的非加减操作，将C设置为移位操作移出值的最后一位。</li>
+<li>对于其他费加减操作，C通常保持不变，但是对于特殊情况，请参阅个别指令说明。</li>
+</ul>
+<p>如果加法、减法或者比较的结果大于或者等于2<sup>31</sup>,或者小于-2<sup>31</sup>，则会发生溢出。</p>
+<h4 id="更新A64代码中的条件标志位"><a href="#更新A64代码中的条件标志位" class="headerlink" title="更新A64代码中的条件标志位"></a>更新A64代码中的条件标志位</h4><p>在AArch64状态中，N、Z、C、V条件标志位保存在NZCV系统寄存器中，它是进程状态的一部分，可以通过MSR和MRS指令进行访问。</p>
+<p><strong>注意：</strong></p>
+<p>只有在指定了S后缀之后，指令才会更新条件标志位，CMP、CMN、CCMP、CCMN和TST指令除外，因为他们总是更新条件标志位。这些指令还确定更新哪些标志位。如果条件指令不执行，它不会影响标志位。</p>
+<p>例如：</p>
+<p>这个例子展示了改变A64代码中一些条件标志的读、修改、写过程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">MRS	X1,NZCV	;复制N、Z、C、V标志位的值到通用寄存器X1</span><br><span class="line">MOV	x2,#0X30000000</span><br><span class="line">BIC	X1,X1,X2	;将C、V位置0（29，28bit）</span><br><span class="line">ORR	x1,x1,#0XC0000000	;将N、Z位置1（31，30bit）</span><br><span class="line">MSR	NZCV,x1	;将X1的值复制到NZCV寄存器，更新条件标志位</span><br></pre></td></tr></table></figure>
+
+<h4 id="更新条件标志的浮点指令"><a href="#更新条件标志的浮点指令" class="headerlink" title="更新条件标志的浮点指令"></a>更新条件标志的浮点指令</h4><p>所有的A64浮点比较指令都可以更新条件标志。这些指令直接更新NZCV寄存器中的标志。</p>
+<h4 id="进位标志位（C）"><a href="#进位标志位（C）" class="headerlink" title="进位标志位（C）"></a>进位标志位（C）</h4><p>当操作的结果会产生进位或者当一个减法操作没有产生借位时，进位标志位（C）将会被设置为1，否则为0。</p>
+<p>C标志位的设置方式：</p>
+<ul>
+<li>对于加法，包括比较指令CMN，如果加法产生进位（无符号溢出），则C设置为1，否则设置为0。</li>
+<li>对于减法，包括比较指令CMP和负指令NEGS和NGCS，如果减法产生了借位(即无符号下溢)，则将C设置为0，否则设置为1。</li>
+<li>对于整数和浮点条件比较指令CCMP、CCMN、FCCMP和FCCMPE, C和其他条件标志要么设置为比较的结果，要么直接设置为直接值。</li>
+<li>对于浮点比较指令，将FCMP和FCMPE、C和其他条件标志设置为比较的结果。</li>
+<li>对于其他指令，C通常保持不变，但对于任何特殊情况，请参见个别指令说明。</li>
+</ul>
+<h4 id="溢出标志位（V）"><a href="#溢出标志位（V）" class="headerlink" title="溢出标志位（V）"></a>溢出标志位（V）</h4><p>加法、减法和比较运算可能发生溢出。</p>
+<p>在使用64位X寄存器的A64指令中，如果操作的结果大于或等于2<sup>63</sup>，或小于-2<sup>63</sup>，就会发生溢出。</p>
+<p>在使用32位W寄存器的A64指令中，如果操作的结果大于或等于2<sup>31</sup>，或小于- 2<sup>31</sup>，就会发生溢出。</p>
+<h4 id="状态码后缀"><a href="#状态码后缀" class="headerlink" title="状态码后缀"></a>状态码后缀</h4><p>可以是有条件的指令有一个可选的双字符条件码后缀。</p>
+<p>条件代码在语法描述中显示为{cond}。下表为可以使用的条件码：</p>
+<table>
+<thead>
+<tr>
+<th>后缀</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>EQ</td>
+<td>等于（Equal）</td>
+</tr>
+<tr>
+<td>NE</td>
+<td>不等于（Not Equal）</td>
+</tr>
+<tr>
+<td>CS</td>
+<td>进位（与HS相同）</td>
+</tr>
+<tr>
+<td>HS</td>
+<td>无符号数大于或等于（与CS相同）</td>
+</tr>
+<tr>
+<td>CC</td>
+<td>C标志位置0（和LO相同）</td>
+</tr>
+<tr>
+<td>LO</td>
+<td>无符号小于（和CC相同）</td>
+</tr>
+<tr>
+<td>MI</td>
+<td>负的或者负的结果（Minus or negative result）</td>
+</tr>
+<tr>
+<td>PL</td>
+<td>正或零的结果</td>
+</tr>
+<tr>
+<td>VS</td>
+<td>溢出</td>
+</tr>
+<tr>
+<td>VC</td>
+<td>没有溢出</td>
+</tr>
+<tr>
+<td>HI</td>
+<td>无符号大于</td>
+</tr>
+<tr>
+<td>LS</td>
+<td>无符号小于或等于</td>
+</tr>
+<tr>
+<td>GE</td>
+<td>有符号大于或等于</td>
+</tr>
+<tr>
+<td>LT</td>
+<td>有符号小于</td>
+</tr>
+<tr>
+<td>GT</td>
+<td>有符号大于</td>
+</tr>
+<tr>
+<td>LE</td>
+<td>有符号小于或等于</td>
+</tr>
+<tr>
+<td>AL</td>
+<td>总是（默认值）</td>
+</tr>
+</tbody></table>
+<p><strong>注意</strong></p>
+<p>其中一些条件代码的含义取决于最后更新条件标志的指令是浮点指令还是整数指令。</p>
+<h4 id="条件代码后缀和相关的标志位"><a href="#条件代码后缀和相关的标志位" class="headerlink" title="条件代码后缀和相关的标志位"></a>条件代码后缀和相关的标志位</h4><p>条件码后缀定义了执行指令必须满足的条件。</p>
+<p>下表显示了可以使用的条件代码和它们所依赖的标志设置：</p>
+<table>
+<thead>
+<tr>
+<th>后缀</th>
+<th>标志位</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>EQ</td>
+<td>Z 置1</td>
+<td>等于</td>
+</tr>
+<tr>
+<td>NE</td>
+<td>Z 置0</td>
+<td>不等于</td>
+</tr>
+<tr>
+<td>CS或HS</td>
+<td>C 置1</td>
+<td>大于等于（无符号&gt;&#x3D;）</td>
+</tr>
+<tr>
+<td>CC或LO</td>
+<td>C 置0</td>
+<td>小于（无符号&lt;）</td>
+</tr>
+<tr>
+<td>MI</td>
+<td>N 置1</td>
+<td>负数</td>
+</tr>
+<tr>
+<td>PL</td>
+<td>N 置0</td>
+<td>大于或等于</td>
+</tr>
+<tr>
+<td>VS</td>
+<td>V 置1</td>
+<td>溢出</td>
+</tr>
+<tr>
+<td>VC</td>
+<td>V 置0</td>
+<td>没有溢出</td>
+</tr>
+<tr>
+<td>HI</td>
+<td>C 置1 且 Z 置0</td>
+<td>大于（无符号&gt;）</td>
+</tr>
+<tr>
+<td>LS</td>
+<td>C 置0 且Z 置1</td>
+<td>小于或等于（无符号&lt;&#x3D;）</td>
+</tr>
+<tr>
+<td>GE</td>
+<td>N和V相同</td>
+<td>有符号&gt;&#x3D;</td>
+</tr>
+<tr>
+<td>LT</td>
+<td>N和V不同</td>
+<td>有符号&lt;</td>
+</tr>
+<tr>
+<td>GT</td>
+<td>Z 置0，N和V相同</td>
+<td>有符号&gt;</td>
+</tr>
+<tr>
+<td>LE</td>
+<td>Z 置1，N和V不同</td>
+<td>有符号&lt;&#x3D;</td>
+</tr>
+<tr>
+<td>AL</td>
+<td>任意</td>
+<td>这个后缀通常省略。</td>
+</tr>
+</tbody></table>
+<p>在A32指令和A64指令中，可选条件代码在语法描述中显示为{cond}。对于Thumb32指令，条件编码在IT指令之前。只有当条件标志满足指定条件时，才执行带有条件码的指令。</p>
+<p>下面是A32代码条件执行的一个例子:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ADD	r0,r1,r2	;r0 = r1 + R2,不要更新标志位</span><br><span class="line">ADDS	r0,r1,r2	;r0 = r1 + R2,更新标志位</span><br><span class="line">ADDSCS	r0,r1,r2	;如果C标志位被置为1，则ro = r1 + r2，并更新标志位</span><br><span class="line">CMP	r0,r1	;计算r0-r1（不保存结果），并更新标志位</span><br></pre></td></tr></table></figure>
+
+<h4 id="执行速度的优化"><a href="#执行速度的优化" class="headerlink" title="执行速度的优化"></a>执行速度的优化</h4><p>要优化代码的执行速度，就必须详细了解目标系统的指令时间、分支预测逻辑和缓存行为。</p>
+<p>更多信息，请参阅处理器的技术参考手册。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ARM/" rel="tag"><i class="fa fa-tag"></i> ARM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/12/11/Overview-of-AArch64-state-translation-1/" rel="next" title="ARM文档翻译（一）----寄存器篇">
+                <i class="fa fa-chevron-left"></i> ARM文档翻译（一）----寄存器篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/12/16/Overview-of-AArch64-state-translation-3/" rel="prev" title="ARM文档翻译（三）----指令篇（一）">
+                ARM文档翻译（三）----指令篇（一） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#A64%E4%B8%AD%E7%9A%84%E6%9D%A1%E4%BB%B6%E6%89%A7%E8%A1%8C"><span class="nav-number">1.</span> <span class="nav-text">A64中的条件执行</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E6%A0%87%E5%BF%97"><span class="nav-number">2.</span> <span class="nav-text">条件标志</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0A64%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E6%9D%A1%E4%BB%B6%E6%A0%87%E5%BF%97%E4%BD%8D"><span class="nav-number">3.</span> <span class="nav-text">更新A64代码中的条件标志位</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E6%9D%A1%E4%BB%B6%E6%A0%87%E5%BF%97%E7%9A%84%E6%B5%AE%E7%82%B9%E6%8C%87%E4%BB%A4"><span class="nav-number">4.</span> <span class="nav-text">更新条件标志的浮点指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%9B%E4%BD%8D%E6%A0%87%E5%BF%97%E4%BD%8D%EF%BC%88C%EF%BC%89"><span class="nav-number">5.</span> <span class="nav-text">进位标志位（C）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%BA%A2%E5%87%BA%E6%A0%87%E5%BF%97%E4%BD%8D%EF%BC%88V%EF%BC%89"><span class="nav-number">6.</span> <span class="nav-text">溢出标志位（V）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E7%A0%81%E5%90%8E%E7%BC%80"><span class="nav-number">7.</span> <span class="nav-text">状态码后缀</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E4%BB%A3%E7%A0%81%E5%90%8E%E7%BC%80%E5%92%8C%E7%9B%B8%E5%85%B3%E7%9A%84%E6%A0%87%E5%BF%97%E4%BD%8D"><span class="nav-number">8.</span> <span class="nav-text">条件代码后缀和相关的标志位</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E9%80%9F%E5%BA%A6%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">9.</span> <span class="nav-text">执行速度的优化</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

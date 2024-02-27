@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="C++," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="一、初识泛型算法1、只读算法一些算法只会读取其输入范围内的元素，而不改变元素。 find 函数 12int val &#x3D; 42;auto result &#x3D; find(vec.cbegin(), vec.cend(),val);  传递给 find 的前两个参数是表示元素范围的迭代器，第三个参数是一个值。find 将范围中每个元素与给定值进行比较。他返回指向第一个等于给定值的元素的迭代器。如果范围中无">
+<meta property="og:type" content="article">
+<meta property="og:title" content="泛型算法">
+<meta property="og:url" content="https://www.sweetloser.com/2023/06/05/%E6%B3%9B%E5%9E%8B%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="一、初识泛型算法1、只读算法一些算法只会读取其输入范围内的元素，而不改变元素。 find 函数 12int val &#x3D; 42;auto result &#x3D; find(vec.cbegin(), vec.cend(),val);  传递给 find 的前两个参数是表示元素范围的迭代器，第三个参数是一个值。find 将范围中每个元素与给定值进行比较。他返回指向第一个等于给定值的元素的迭代器。如果范围中无">
+<meta property="og:locale">
+<meta property="article:published_time" content="2023-06-05T07:46:19.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.637Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2023/06/05/泛型算法/"/>
+
+
+
+
+
+  <title>泛型算法 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2023/06/05/%E6%B3%9B%E5%9E%8B%E7%AE%97%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">泛型算法</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-06-05T15:46:19+08:00">
+                2023-06-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index">
+                    <span itemprop="name">C++</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2023/06/05/%E6%B3%9B%E5%9E%8B%E7%AE%97%E6%B3%95/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2023/06/05/%E6%B3%9B%E5%9E%8B%E7%AE%97%E6%B3%95/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  4.3k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  17 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="一、初识泛型算法"><a href="#一、初识泛型算法" class="headerlink" title="一、初识泛型算法"></a>一、初识泛型算法</h3><h4 id="1、只读算法"><a href="#1、只读算法" class="headerlink" title="1、只读算法"></a>1、只读算法</h4><p>一些算法只会读取其输入范围内的元素，而不改变元素。</p>
+<p><strong>find 函数</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">int val = 42;</span><br><span class="line">auto result = find(vec.cbegin(), vec.cend(),val);</span><br></pre></td></tr></table></figure>
+
+<p>传递给 find 的前两个参数是表示元素范围的迭代器，第三个参数是一个值。find 将范围中每个元素与给定值进行比较。他返回指向第一个等于给定值的元素的迭代器。如果范围中无匹配元素，则 find 返回第二个参数来表示搜索失败。</p>
+<p><strong>accumulate 函数</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int sum = accumulate(vec.cbegin(), vec.cend(), 0);</span><br></pre></td></tr></table></figure>
+
+<p>accumulate 函数定义在 numeric 中，accumulate 函数接受三个参数。前两个指出了需要求和的元素的范围，第三个参数是和的初值。</p>
+<p>注意：accumulate 函数指定的序列中的元素必须与第三个参数匹配，或者能够转换为第三个参数的类型：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// v 是 vector&lt;string&gt; 类型。</span><br><span class="line">string sum = accumlate(v.cbegin(), v.cend(), string(&quot;&quot;));   // 正确</span><br><span class="line">string sum = accumlate(v.cbegin(), v.cend(), &quot;&quot;);   // 错误</span><br></pre></td></tr></table></figure>
+
+<p><strong>equal 函数</strong></p>
+<p>另一个制度算法是 equal ，用于确定两个序列是否保存相同的值。它将第一个序列中每个元素与第二个序列中对应元素进行比较。如果所有对应元素都相等，则返回 true，否则返回 false。<br>此算法接受三个迭代器：前两个表示第一个序列中的元素范围。第三个表示第二个序列的首元素：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">equal(roster1.cbegin(),roster1.cend(),roster2.cbegin());</span><br></pre></td></tr></table></figure>
+
+<h4 id="2、写容器元素的算法"><a href="#2、写容器元素的算法" class="headerlink" title="2、写容器元素的算法"></a>2、写容器元素的算法</h4><p>算法不会执行容器操作，因此它们自身不可能改变容器大小。</p>
+<p><strong>fill 函数</strong><br>fill 算法接受一对迭代器表示一个范围，还接受一个值作为第三个参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fill(vec.begin(), vec.end(), 0);</span><br></pre></td></tr></table></figure>
+
+<p><strong>fill_n 函数</strong><br>函数 fill_n 接受一个单迭代器、一个计数值和一个值。它将给定值赋予迭代器指向的元素开始的指定个元素。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fill_n(vec.begin(), vec.size(), 0);         // 将所有元素重置为 0</span><br></pre></td></tr></table></figure>
+
+<p><strong>介绍 back_inserter</strong></p>
+<p>一种保证算法有足够元素空间来容纳输出数据的方法是使用<em><strong>插入迭代器</strong></em>。</p>
+<p>插入迭代器是一种向容器中添加元素的迭代器。</p>
+<p>back_inserter 接受一个指向容器的引用，返回一个与该容器绑定的插入迭代器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;int&gt; vec;        // 空向量</span><br><span class="line">auto it = back_inserter(vec);       // 绑定了 vec 的插入迭代器</span><br><span class="line">*it = 42;</span><br></pre></td></tr></table></figure>
+
+<p><strong>拷贝算法</strong></p>
+<p>拷贝(copy)算法是另一个向目的位置迭代器指向的输出序列中写入数据的算法。此算法接受三个迭代器，前两个表示一个输入范围，第三个表示目的序列起始位置。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int a1[] = &#123;0,1,2,3,4,5,6,7,8,9&#125;;</span><br><span class="line">int a2[sizeof(a1)/sizeof(*a1)];</span><br><span class="line">copy(begin(a1),end(a1),begin(a2));</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>replace 算法</strong><br>replace 算法读入一个序列，并将其中所有等于给定值的元素都改为另一个值。<br>此算法接受 4 个参数：前两个是迭代器，表示输入序列，后两个一个是要搜索的值，另一个是新值。它将所有等于第一个值的元素替换为第二个值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">replace(begin(a1), end(a1), 5, 15);     // 将 a1 中所有值为 5 的元素 替换为 15</span><br></pre></td></tr></table></figure>
+
+<p><strong>replace_copy 算法</strong></p>
+<p>如果我们希望保留原序列不变，可以调用 replace_copy 。此算法接受额外第三个迭代器参数，指出调整后序列的保存位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">int a3[sizeof(a1)/sizeof(*a1)];</span><br><span class="line">replace_copy(begin(a1), end(a1), begin(a3), 5, 15); </span><br></pre></td></tr></table></figure>
+
+<h4 id="3、重排容器元素的算法"><a href="#3、重排容器元素的算法" class="headerlink" title="3、重排容器元素的算法"></a>3、重排容器元素的算法</h4><p><strong>sort 算法</strong></p>
+<p>sort 算法接受两个迭代器，表示要排序的范围。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;string&gt; s_vec&#123;&quot;the&quot;,&quot;quick&quot;,&quot;red&quot;,&quot;jumps&quot;,&quot;fox&quot;,&quot;over&quot;,&quot;the&quot;,&quot;slow&quot;,&quot;red&quot;,&quot;turle&quot;&#125;;</span><br><span class="line">sort(s_vec.begin(), s_vec.end());   // 此时，s_vec为&#123;&quot;fox&quot;,&quot;jumps&quot;,&quot;over&quot;,&quot;quick&quot;,&quot;red&quot;,&quot;red&quot;,&quot;slow&quot;,&quot;the&quot;,&quot;the&quot;,&quot;turle&quot;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>unique 算法</strong><br>unique 算法重排输入序列，将相邻的重复项“消除”，并返回一个指向不重复范围末尾的迭代器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto end_unique = unique(s_vec.begin(),s_vec.end());</span><br><span class="line">s_vec.erase(end_unique, s_vec.end());       // 删除多余的重复元素</span><br></pre></td></tr></table></figure>
+
+<h3 id="二、定制操作"><a href="#二、定制操作" class="headerlink" title="二、定制操作"></a>二、定制操作</h3><h4 id="1、向算法传递函数"><a href="#1、向算法传递函数" class="headerlink" title="1、向算法传递函数"></a>1、向算法传递函数</h4><p><strong>谓词</strong></p>
+<p>谓词是一个可调用的表达式，其返回结果是一个能用做条件的值。标准库算法所使用的的谓词分为两类：一元谓词（只接受单一参数）和二元谓词（接受两个参数）。<br>接受谓词参数的算法对输入序列中的元素调用谓词，因此，元素类型必须能转换为谓词的参数类型。</p>
+<p><strong>sort 函数</strong></p>
+<p>接受一个二元谓词参数的 sort 函数用这个谓词代替 &lt; 来比较元素。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 比较函数，用来按长度排序</span><br><span class="line">bool isShorter(const string &amp;s1, const string &amp;s2) &#123;</span><br><span class="line">    return s1.size() &lt; s2.size();</span><br><span class="line">&#125;</span><br><span class="line">sort(s_vec.begin(), s_vec.end(), isShorter);</span><br></pre></td></tr></table></figure>
+
+<p><strong>stable_sort 函数</strong><br>在我们使用谓词重排的同时，还希望具有相同长度的元素维持原有顺序。（即相同长度的字符串按照大小排序）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">stable_sort(s_vec.begin(), s_vec.end(), isShorter);</span><br></pre></td></tr></table></figure>
+
+<h4 id="2、lambda-表达式"><a href="#2、lambda-表达式" class="headerlink" title="2、lambda 表达式"></a>2、lambda 表达式</h4><p><strong>介绍 lambda</strong><br>我们可以向一个算法传递任何类别的可调用对象。<br>对于一个对象或一个表达式，如果可以对其使用调用运算符，则称它为可调用的。</p>
+<p>到目前为止，我们使用过的仅有的两种可调用对象是函数和函数指针。</p>
+<p>一个 lambda 表达式表示一个可调用的代码单元。我们可以将其理解为一个未命名的内联函数。</p>
+<p>lambda 表达式具有如下形式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[capture list](parameter list) -&gt; return type &#123;function body&#125;</span><br><span class="line">// capture list （捕获列表）是一个 lambda 所在函数中定义的局部变量的列表；</span><br><span class="line">// return type 、parameter list 和 function body 与普通函数一样，分别是返回类型、参数列表和函数体；</span><br></pre></td></tr></table></figure>
+
+<p>我们可以忽略参数列表和返回值类型，但必须永远包含捕获列表和函数体：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto f = []&#123;return 42;&#125;;</span><br><span class="line">cout &lt;&lt; f() &lt;&lt; endl;    // 打印 42</span><br></pre></td></tr></table></figure>
+
+<p>在 lambda 中忽略括号和参数列表等价于指定一个空参数列表。<br>如果忽略返回类型，lambda 根据函数体中的代码推断出返回类型。如果函数体只是一个 return 语句，则返回类型从返回的表达式的类型推断而来。否则，返回类型为 void。</p>
+<p><strong>向 lambda 传递参数</strong><br>与一个普通函数调用类似，调用一个 lambda 时给定的实参被用来初始化 lambda 的形参。通常，实参和形参的类型必须匹配。但与普通函数不同，lambda 不能有默认参数。因此，一个 lambda 调用实参和形参数目相等。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">auto isShorter = [](const string &amp;s1, const string &amp;s2)&#123;</span><br><span class="line">    return s1.size() &lt; s2.size();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">stable_sort(s_vec.begin(), s_vec.end(), isShorter);</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用捕获对象</strong><br>虽然一个 lambda 可以出现在一个函数中，使用其局部变量，但它只能使用那些明确指明的变量。一个 lambda 通过将局部变量包含在其捕获对象中来指出将会使用这些变量。捕获列表指引 lambda 在其内部包含访问局部变量所需的信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">string::size_type sz = 3;</span><br><span class="line">auto f = [sz](const string &amp;s) -&gt; bool&#123;</span><br><span class="line">    return s.size()&lt;=3;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>find_if 函数</strong><br>find_if 算法对输入序列中的每个元素调用给定的这个谓词。它返回第一个使谓词返回非 0 值的元素，如果不存在，这样的元素，则返回尾后迭代器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;string&gt; s_vec&#123;&quot;hello&quot;, &quot;world&quot;, &quot;c++&quot;, &quot;program&quot;&#125;;</span><br><span class="line">string::size_type sz = 3;</span><br><span class="line">auto f = [sz](const string &amp;s) -&gt; bool&#123;</span><br><span class="line">    return s.size()&lt;=sz;</span><br><span class="line">&#125;;</span><br><span class="line">// 调用 find_if 返回一个迭代器，指向第一个长度小于等于 sz 的元素。如果这样的元素不存在，则返回 s_vec.end()。</span><br><span class="line">auto wc = find_if(s_vec.begin(), s_vec.end(), f);</span><br></pre></td></tr></table></figure>
+
+<p><strong>for_each 函数</strong><br>for_each 算法接受一个可调用对象，并对输入序列中每个元素调用此对象：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">for_each(wc, s_vec.end(), [](const string &amp;s)&#123;cout &lt;&lt; s &lt;&lt; &quot; &quot;;&#125;);</span><br><span class="line">// 打印 c++ program</span><br></pre></td></tr></table></figure>
+
+<h4 id="3、lambda-捕获和返回"><a href="#3、lambda-捕获和返回" class="headerlink" title="3、lambda 捕获和返回"></a>3、lambda 捕获和返回</h4><p><strong>值捕获</strong><br>与传值参数类似，采用值捕获的前提是变量可以拷贝。与参数不同，被捕获的变量是在 lambda 创建时拷贝，而不是调用时拷贝：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">void fcn2() &#123;</span><br><span class="line">    size_t v1 = 32;     // 局部变量</span><br><span class="line">    auto f2 = [v1] &#123;return v1&#125;;</span><br><span class="line">    v1 = 0;</span><br><span class="line">    auto j = f2();      // j 为42，</span><br><span class="line">    </span><br><span class="line">    // 由于被捕获变量的值是在 lambda 创建时拷贝，因此随后对其修改不会影响到 lambda 内对应的值。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>引用捕获</strong><br>我们定义 lambda 时可以采用引用方式捕获变量：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">void fcn2() &#123;</span><br><span class="line">    size_t v1 = 32;     // 局部变量</span><br><span class="line">    auto f2 = [&amp;v1] &#123;return v1&#125;;</span><br><span class="line">    v1 = 0;</span><br><span class="line">    auto j = f2();      // j 为0，</span><br><span class="line">    </span><br><span class="line">    // f2 保存 v1 的引用，而非拷贝。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当以引用当时捕获一个变量时，必须保证在 lambda 执行时变量是存在的。</p>
+<p><strong>隐式捕获</strong></p>
+<p>除了显式地列出我们希望使用的来自所在函数的变量之外，还可以让编译器根据 lambda 体重的代码来推断我们要使用哪些变量。为了指示编译器推断捕获列表，应在捕获列表中写一个 &amp; 或 &#x3D;。&amp; 告诉编译器采用捕获引用方式，&#x3D; 则表示采用值捕获方式。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// sz 为隐式捕获，值捕获方式</span><br><span class="line">wc = find_if(s_vec.begin(),s_vec.end(),[=](const string &amp;s)&#123;return s.size() &lt;= sz;&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>如果我们希望对一部分变量采用值捕获，对其他变量采用引用捕获，可以混合使用隐式捕获和显示捕获：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">void biggers(vector&lt;string&gt; &amp;words,vector&lt;string&gt;::size_type sz, ostream &amp;os = cout, char c =&#x27; &#x27;) &#123;</span><br><span class="line">    </span><br><span class="line">    // os 隐式捕获，引用捕获方式； c 显式捕获，值捕获方式</span><br><span class="line">    for_each(words.begin(), words.end(), [&amp; ,c](const string &amp;s) &#123;</span><br><span class="line">        os &lt;&lt; s &lt;&lt; c;</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    // os 显式捕获，引用捕获方式； c 隐式捕获，值捕获方式</span><br><span class="line">    for_each(words.begin(), words.end(), [= ,&amp;os](const string &amp;s) &#123;</span><br><span class="line">        os &lt;&lt; s &lt;&lt; c;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当我们混合使用隐式捕获和显式捕获时，捕获列表中的第一个元素必须是一个 &amp; 或 &#x3D; 。此符号指定了默认捕获方式。</p>
+<table>
+    <tr>
+        <th colspan="2">lambda 捕获列表</th>
+    </tr>
+    <tr>
+        <td><b><i>[]</i></b></td>
+        <td>空捕获列表。lambda 不能使用所在函数中的变量。一个 lambda 只有捕获变量后才能使用它们</td>
+    </tr>
+    <tr>
+        <td><b><i>[nams]</i></b></td>
+        <td><b><i>names</i></b>是一个逗号分隔的名字列表，这些名字都是 lambda 所在函数的局部变量。默认情况下，捕获列表中变量都被拷贝。名字前如果使用了 & ，则采用引用捕获方式</td>
+    </tr>
+    <tr>
+        <td><b><i>[&]</i></b></td>
+        <td>隐式捕获列表，采用引用捕获方式。lambda 体中所使用的来自所在函数的实体都采用引用方式使用</td>
+    </tr>
+    <tr>
+        <td><b><i>[=]</i></b></td>
+        <td>隐式捕获列表，采用值捕获方式。lambda 体将拷贝所使用的来自所在函数的实体的值</td>
+    </tr>
+    <tr>
+        <td><b><i>[&, identifier_list]</i></b></td>
+        <td><b><i>identifier_list</i></b> 是一个逗号分隔的列表，包含 0 个或多个来自所在函数的变量。这些变量采用值捕获方式，而任何隐式捕获的变量都采用引用方式捕获。identifier_list 中的名字前面不能使用 &</td>
+    </tr>
+    <tr>
+        <td><b><i>[=, identifier_list]</i></b></td>
+        <td><b><i>identifier_list</i></b> 中的变量都采用引用方式捕获，而任何隐式捕获的变量都采用值方式捕获。<b><i>identifier_list</i></b> 中的名字不能包含 this ，且这些名字之前必须使用 &。</td>
+    </tr>
+</table>
+
+
+<p><strong>可变 lambda</strong><br>默认情况下，对于一个值被拷贝的变量，lambda 不会改变其值。如果我们希望能改变一个被捕获的变量的值，就必须在参数列表首加上关键字 mutable。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">void fcn3() &#123;</span><br><span class="line">    size_t v1 = 42;</span><br><span class="line">    auto f = [v1]() mutable &#123;return ++v1;&#125;;</span><br><span class="line">    </span><br><span class="line">    v1 = 0;</span><br><span class="line">    </span><br><span class="line">    auto j = f();   // j = 43;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>指定 lambda 返回类型</strong></p>
+<p>如果一个 lambda 体只包含单一的 return 语句，那么我们无需指定返回类型，因为可以根据返回值类型推断出来。<br>如果一个 lambda 体包含 return 之外的任何语句，那么编译器假定此 lambda 返回 void。</p>
+<p>与其他返回 void 的函数类似，被推断返回 void 的 lambda 不能返回值。</p>
+<p>当我们需要为一个 lambda 定义返回类型时，必须使用尾置返回类型：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">transform(vi.begin(), vi.end(), vi.begin(),[](int i) -&gt; int &#123;</span><br><span class="line">    if (i &lt; 0) &#123;</span><br><span class="line">        return -i;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return i;  </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h4 id="4、参数绑定"><a href="#4、参数绑定" class="headerlink" title="4、参数绑定"></a>4、参数绑定</h4><p><strong>标准库 bind 函数</strong></p>
+<p>bind 函数接受一个可调用对象，生成一个新的可调用对象来“适应”原对象的参数列表。</p>
+<p>调用 bind 的一般形式为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">auto newCallable = bind(callable, arg_list);</span><br></pre></td></tr></table></figure>
+
+<p>其中，<em><strong>newCallable</strong></em> 本身是一个可调用对象，<em><strong>arg_list</strong></em> 是一个逗号分隔的参数列表，对应给定的 <em><strong>callable</strong></em> 的参数，即，当我们调用 <em><strong>newCallable</strong></em> 时，<em><strong>newCallable</strong></em> 会调用 <em><strong>callable</strong></em> ，并传递给他 <em><strong>arg_list</strong></em> 中的参数。</p>
+<p><em><strong>arg_list</strong></em> 中的参数可能包含形如 _n 的名字，其中 n 是一个整数。这些参数是“占位符”，表示 <em><strong>newCallable</strong></em> 的参数，它们占据了传递给 <em><strong>newCallable</strong></em> 的参数的位置。数值 n 表示生成的可调用对象中参数的位置：_1 为 <em><strong>newCallable</strong></em> 的第一个参数，_2 为第二个参数，以此类推。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">bool check_size(const string &amp;s, string::size_type sz) &#123;</span><br><span class="line">    return s.size() &gt;= sz;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">auto check_f = bind(check_size, _1, 6);</span><br><span class="line"></span><br><span class="line">check_f(string(&quot;Hello world!&quot;));</span><br><span class="line"></span><br><span class="line">//调用 check_f(s) 相当于 调用 check_size(s, 6);</span><br></pre></td></tr></table></figure>
+
+<p>使用 bind，我们可以将原来基于 lambda 的 find_if 调用：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">auto wc = find_if(s_vec.begin(),s_vec.end(),[=](const string &amp;s)&#123;return s.size() &lt;= sz;&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>替换为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wc = find_if(s_vec.begin(),s_vec.end(),bind(check_size, _1, sz));</span><br></pre></td></tr></table></figure>
+
+<p><strong>bind 的参数</strong></p>
+<p>我们可以用 bind 修正参数的值，也可以用 bind 绑定给定可调用对象中的参数或重新安排其参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto g = bind(f, a, b, _2, c, _1); </span><br><span class="line">g(X, Y);            // 等价于 f(a, b, Y, c, X);</span><br></pre></td></tr></table></figure>
+
+<p>下面是用 bind 重排参数顺序的具体例子：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 按单词长度由短到长排序</span><br><span class="line">sort(words.begin(), words.end(), isShorter);</span><br><span class="line"></span><br><span class="line">// 按单词长度由长到短排序</span><br><span class="line">sort(words.begin(), words.end(), bind(isShorter, _2, _1));</span><br></pre></td></tr></table></figure>
+
+<p><strong>绑定引用参数</strong></p>
+<p>默认情况下，bind 的那些不是占位符的参数被拷贝到 bind 返回的可调用对象中。但是，与 lambda 类似，有时对有些绑定的参数我们希望以引用方式传递，或是要绑定参数的类型无法拷贝。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ostream &amp;print(ostream &amp;os, const string &amp;s, char c) &#123;</span><br><span class="line">    return os &lt;&lt; s &lt;&lt; c;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 错误： 无法拷贝 os 对象</span><br><span class="line">for_each(words.begin(), words.end(), bind(print, cout, _1, &#x27; &#x27;));</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>如果我们希望传递给 bind 一个对象而不是拷贝它，就必须使用标准库 ref 函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">for_each(words.begin(), words.end(), bind(print, ref(cout), _1, &#x27; &#x27;));</span><br></pre></td></tr></table></figure>
+
+<p>函数 ref 返回一个对象，包含给定的引用，此对象是可以拷贝的。标准库中还有一个 cref 函数，生成一个保存 const 引用的类。</p>
+<h3 id="三、再探迭代器"><a href="#三、再探迭代器" class="headerlink" title="三、再探迭代器"></a>三、再探迭代器</h3><p>除了为每个容器定义的迭代器之外，标准库在头文件 iterator 中还定义了额外几种迭代器。这些迭代器包括以下几种：</p>
+<ul>
+<li><strong>插入迭代器：</strong> 这些迭代器被绑定到一个容器上，可用来向容器插入元素。</li>
+<li><strong>流迭代器：</strong> 这些迭代器被绑定到输入或输出流上，可用来遍历所关联的 IO 流。</li>
+<li><strong>反向迭代器：</strong> 这些迭代器向后而不是向前移动，除了 forward_list 之外的标准容器都有反向迭代器。</li>
+<li><strong>移动迭代器：</strong> 这些专用的迭代器不是拷贝其中的元素，而是移动它们。</li>
+</ul>
+<h4 id="1、插入迭代器"><a href="#1、插入迭代器" class="headerlink" title="1、插入迭代器"></a>1、插入迭代器</h4><p>插入迭代器是一种迭代器适配器，他接受一个容器，生成一个迭代器，能实现向给定容器添加元素。当我们通过一个插入迭代器进行赋值时，该迭代器调用容器操作来向给定容器的指定位置插入一个元素。</p>
+<table>
+    <tr>
+        <th colspan="2">插入迭代器操作</th>
+    </tr>
+    <tr>
+        <td>it = t</td>
+        <td>在 it 指定的当前位置插入值 t 。假定 c 是 it 绑定的容器，依赖于插入迭代器的不同种类，此赋值会分别调用 c.push_back(t)、 c.push_front(t) 或 c.insert(t, p)，其中 p 为传递给 inserter 的迭代器位置</td>
+    </tr>
+    <tr>
+        <td>*it,++it,it++</td>
+        <td>这些操作虽然存在，但不会对 it 做任何操作。每个操作都返回 it </td>
+    </tr>
+</table>
+
+
+<p>插入迭代器有三种类型，差异在于元素插入的位置：</p>
+<ul>
+<li><strong>back_inserter</strong> 创建一个使用 push_back 的迭代器。</li>
+<li><strong>front_inserter</strong> 创建一个使用 push_front 的迭代器。</li>
+<li><strong>inserter</strong> 创建一个使用 insert 的迭代器。此函数接受第二个第二个参数，这个参数必须是一个指向给定容器的迭代器。元素将被插入到给定迭代器所表示的元素之前。</li>
+</ul>
+<h4 id="2、iostream-迭代器"><a href="#2、iostream-迭代器" class="headerlink" title="2、iostream 迭代器"></a>2、iostream 迭代器</h4><p>虽然 iostream 类型不是容器，但标准库定义了可以用于这些IO类型对象的迭代器。<strong>istream_iterator</strong> 读取输入流，<strong>ostream_iterator</strong> 向一个输出流写数据。</p>
+<p><strong>istream_iterator 操作</strong><br>当创建一个流迭代器时，必须指定迭代器将要读写的对象类型。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C/" rel="tag"><i class="fa fa-tag"></i> C++</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2022/09/30/cocoapods-errors/" rel="next" title="cocoapods报错笔记">
+                <i class="fa fa-chevron-left"></i> cocoapods报错笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2023/10/10/WKWebView%E7%94%A8%E6%B3%95/" rel="prev" title="WKWebView用法">
+                WKWebView用法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%88%9D%E8%AF%86%E6%B3%9B%E5%9E%8B%E7%AE%97%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">一、初识泛型算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%E3%80%81%E5%8F%AA%E8%AF%BB%E7%AE%97%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text">1、只读算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%E3%80%81%E5%86%99%E5%AE%B9%E5%99%A8%E5%85%83%E7%B4%A0%E7%9A%84%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.</span> <span class="nav-text">2、写容器元素的算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3%E3%80%81%E9%87%8D%E6%8E%92%E5%AE%B9%E5%99%A8%E5%85%83%E7%B4%A0%E7%9A%84%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.</span> <span class="nav-text">3、重排容器元素的算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%AE%9A%E5%88%B6%E6%93%8D%E4%BD%9C"><span class="nav-number">2.</span> <span class="nav-text">二、定制操作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%E3%80%81%E5%90%91%E7%AE%97%E6%B3%95%E4%BC%A0%E9%80%92%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">1、向算法传递函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%E3%80%81lambda-%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="nav-number">2.2.</span> <span class="nav-text">2、lambda 表达式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3%E3%80%81lambda-%E6%8D%95%E8%8E%B7%E5%92%8C%E8%BF%94%E5%9B%9E"><span class="nav-number">2.3.</span> <span class="nav-text">3、lambda 捕获和返回</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4%E3%80%81%E5%8F%82%E6%95%B0%E7%BB%91%E5%AE%9A"><span class="nav-number">2.4.</span> <span class="nav-text">4、参数绑定</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%86%8D%E6%8E%A2%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="nav-number">3.</span> <span class="nav-text">三、再探迭代器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%E3%80%81%E6%8F%92%E5%85%A5%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="nav-number">3.1.</span> <span class="nav-text">1、插入迭代器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%E3%80%81iostream-%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="nav-number">3.2.</span> <span class="nav-text">2、iostream 迭代器</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

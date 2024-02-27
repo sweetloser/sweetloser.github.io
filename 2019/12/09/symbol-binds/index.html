@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS逆向," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="懒加载和非懒加载iOS对于引用的外部符号，分为Lazy Symbol和Non-Lazy Symbol，分别存储在__DATA,__got节和__DATA,__la_symbol_ptr节。  Non-Lazy Symbol符号在dyld加载模块的时候，就会将真实的函数地址写入到对应的地址中，实现绑定。而Non-Lazy Symbol则会在第一次调用该函数的时候，为其动态寻找真实函数地址并进行绑定。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="符号绑定的另一种打开方式">
+<meta property="og:url" content="https://www.sweetloser.com/2019/12/09/symbol-binds/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="懒加载和非懒加载iOS对于引用的外部符号，分为Lazy Symbol和Non-Lazy Symbol，分别存储在__DATA,__got节和__DATA,__la_symbol_ptr节。  Non-Lazy Symbol符号在dyld加载模块的时候，就会将真实的函数地址写入到对应的地址中，实现绑定。而Non-Lazy Symbol则会在第一次调用该函数的时候，为其动态寻找真实函数地址并进行绑定。">
+<meta property="og:locale">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/1.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/2.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/3.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/5.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/6.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/7.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/8.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/9.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/10.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/11.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/12.png">
+<meta property="article:published_time" content="2019-12-09T11:06:24.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.590Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS逆向">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.sweetloser.com/2019/12/09/symbol-binds/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2019/12/09/symbol-binds/"/>
+
+
+
+
+
+  <title>符号绑定的另一种打开方式 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2019/12/09/symbol-binds/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">符号绑定的另一种打开方式</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-09T19:06:24+08:00">
+                2019-12-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/12/09/symbol-binds/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/12/09/symbol-binds/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  751 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  2 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="懒加载和非懒加载"><a href="#懒加载和非懒加载" class="headerlink" title="懒加载和非懒加载"></a>懒加载和非懒加载</h4><p>iOS对于引用的外部符号，分为<code>Lazy Symbol</code>和<code>Non-Lazy Symbol</code>，分别存储在<code>__DATA,__got</code>节和<code>__DATA,__la_symbol_ptr</code>节。</p>
+<p><img src="/2019/12/09/symbol-binds/1.png" alt="1"></p>
+<p><code>Non-Lazy Symbol</code>符号在dyld加载模块的时候，就会将真实的函数地址写入到对应的地址中，实现绑定。而<code>Non-Lazy Symbol</code>则会在第一次调用该函数的时候，为其动态寻找真实函数地址并进行绑定。</p>
+<p>facebook基于符号绑定机制，写出了hook神器<code>fishhook</code>，通过查找符号指针并替换，从而达到hook效果！！！</p>
+<p>然而，基于模块检测反hook，却甚是烦人。你可能会有反反hook来应付，但是它也有可能会有反反反hook来对付你~~~</p>
+<p>那么，怎么才能终结这场hook与反hook的心理战呢？</p>
+<h4 id="Mach-O-View-分析动态符号绑定过程"><a href="#Mach-O-View-分析动态符号绑定过程" class="headerlink" title="Mach-O View 分析动态符号绑定过程"></a>Mach-O View 分析动态符号绑定过程</h4><p>简单分析一下<code>Lazy Symbol</code>的绑定过程:</p>
+<p><img src="/2019/12/09/symbol-binds/2.png" alt="2"></p>
+<p><img src="/2019/12/09/symbol-binds/3.png" alt="3"></p>
+<p>这里以<code>NSLog</code>为例：</p>
+<p>可以看出，符号<code>NSLog</code>所指向的地址为：0x0000000100006474。</p>
+<p>转化为文件偏移为：0x0000000100006474 - 0x100008078 + 32888 &#x3D; 0x6474；</p>
+<p>到文件偏移为<code>0x6474</code>的位置查看：</p>
+<p>这是一段可执行代码，地址0x6474处的意思是：读取0x647c位置处的四个字节的数据（0x1d），保存到w16寄存器。然后无条件跳转到0x645c（这里的地址，全部都是指文件偏移）。</p>
+<p><img src="/2019/12/09/symbol-binds/5.png" alt="5"></p>
+<p>这段代码，光这么看其实看不出什么，但是如果去调试的话，就会发现，这段代码实际上是在调用<code>dyld_stub_binder</code>为懒加载符号绑定真实地址。而刚刚在0x6474处的代码获取到的四字节的数据，实际上是符号绑定信息的偏移：</p>
+<p><img src="/2019/12/09/symbol-binds/6.png" alt="6"></p>
+<p>0xc428+0x1d &#x3D; 0xc445</p>
+<p>也就是说，动态绑定NSLog所需要的数据，就存储在0xc445处。</p>
+<p>那么，理论上来说，如果我们尝试着修改这里的数据，是不是就会改变符号的查找的过程呢？</p>
+<h4 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h4><p>想的再多，都不如动手操作！！！</p>
+<p>新建一个工程，书写如下代码（main.m）:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((constructor)) static void entry(int argc,char *argv[],char **apple,char **executablepath,struct mach_header_64 **mh_ptr)&#123;</span><br><span class="line">    </span><br><span class="line">    if (!strncmp(argv[0], &quot;aaa&quot;, 3)) &#123;</span><br><span class="line">        printf(&quot;the same!!&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>并按照如上方式，查找到函数<code>strncmp</code>的Lazy Binding Info，做如下修改：</p>
+<p><img src="/2019/12/09/symbol-binds/7.png" alt="7"></p>
+<p>修改后</p>
+<p><img src="/2019/12/09/symbol-binds/8.png" alt="7"></p>
+<p>编写动态库并注入到可执行文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">__attribute__((visibility(<span class="string">&quot;default&quot;</span>))) <span class="type">int</span> <span class="title function_">strncmq</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *__s1, <span class="type">const</span> <span class="type">char</span> *__s2, <span class="type">size_t</span> __n)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">strncmq</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *__s1, <span class="type">const</span> <span class="type">char</span> *__s2, <span class="type">size_t</span> __n)</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;hook:%s\nhook:%s&quot;</span>,__s1,__s2);</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">strncmp</span>(__s1, __s2, __n);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>重签名运行！！</p>
+<p><img src="/2019/12/09/symbol-binds/9.png" alt="9"></p>
+<p>发现已经替换成功了！！！</p>
+<p>但是，用ida或者hopper分析一下二进制文件，会发现调用的还是原来的strncmp符号：</p>
+<p><img src="/2019/12/09/symbol-binds/10.png" alt="10"></p>
+<p>说明如果进行模块检测的话，还是可以检测出来的~因为虽然符号查找替换了，但是实际上”外套”还是strncmp。所以，继续把外套也修改了！！！</p>
+<p>修改这两个处：</p>
+<p><img src="/2019/12/09/symbol-binds/11.png" alt="11"></p>
+<p>修改后：</p>
+<p><img src="/2019/12/09/symbol-binds/12.png" alt="12"></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>对于动态绑定的外部引用符号，能动手脚的地方确实很多！！！</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS%E9%80%86%E5%90%91/" rel="tag"><i class="fa fa-tag"></i> iOS逆向</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/30/Mach-O-file-analysis/" rel="next" title="Mach-o文件解析">
+                <i class="fa fa-chevron-left"></i> Mach-o文件解析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/12/11/Overview-of-AArch64-state-translation-1/" rel="prev" title="ARM文档翻译（一）----寄存器篇">
+                ARM文档翻译（一）----寄存器篇 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%87%92%E5%8A%A0%E8%BD%BD%E5%92%8C%E9%9D%9E%E6%87%92%E5%8A%A0%E8%BD%BD"><span class="nav-number">1.</span> <span class="nav-text">懒加载和非懒加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mach-O-View-%E5%88%86%E6%9E%90%E5%8A%A8%E6%80%81%E7%AC%A6%E5%8F%B7%E7%BB%91%E5%AE%9A%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">Mach-O View 分析动态符号绑定过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E8%B7%B5"><span class="nav-number">3.</span> <span class="nav-text">实践</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS开发," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="OC方法执行流程对OC的runtime机制稍有了解的都知道，OC调用方法，实际上是通过objc_msgSend进行的。其调用方法的基本步骤为：  判断调用者（receiver 或者 self）是否为空。 如果为空，则直接返回。 如果不为空，进行步骤2。   从当前类的方法缓存中查找该方法的实现。 如果查找到，则调用缓存中的imp。 如果没有查找到，则进步骤3。   调用_class_lookupM">
+<meta property="og:type" content="article">
+<meta property="og:title" content="objc_msgSend解析----方法缓存">
+<meta property="og:url" content="https://www.sweetloser.com/2020/01/03/objc-msgSend/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="OC方法执行流程对OC的runtime机制稍有了解的都知道，OC调用方法，实际上是通过objc_msgSend进行的。其调用方法的基本步骤为：  判断调用者（receiver 或者 self）是否为空。 如果为空，则直接返回。 如果不为空，进行步骤2。   从当前类的方法缓存中查找该方法的实现。 如果查找到，则调用缓存中的imp。 如果没有查找到，则进步骤3。   调用_class_lookupM">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-01-03T03:20:20.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.584Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS开发">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2020/01/03/objc-msgSend/"/>
+
+
+
+
+
+  <title>objc_msgSend解析----方法缓存 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2020/01/03/objc-msgSend/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">objc_msgSend解析----方法缓存</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-03T11:20:20+08:00">
+                2020-01-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/01/03/objc-msgSend/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2020/01/03/objc-msgSend/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  1.9k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  9 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="OC方法执行流程"><a href="#OC方法执行流程" class="headerlink" title="OC方法执行流程"></a>OC方法执行流程</h4><p>对OC的runtime机制稍有了解的都知道，OC调用方法，实际上是通过<code>objc_msgSend</code>进行的。其调用方法的基本步骤为：</p>
+<ol>
+<li>判断调用者（receiver 或者 self）是否为空。<ul>
+<li>如果为空，则直接返回。</li>
+<li>如果不为空，进行步骤2。</li>
+</ul>
+</li>
+<li>从当前类的方法缓存中查找该方法的实现。<ul>
+<li>如果查找到，则调用缓存中的imp。</li>
+<li>如果没有查找到，则进步骤3。</li>
+</ul>
+</li>
+<li>调用<code>_class_lookupMethodAndLoadCache3</code>方法查找<ul>
+<li>从本class以及继承体系中逐级向上查找并填充到缓存中。如果继承关系中也没有寻找，则：</li>
+<li>调用<code>_class_resolveMethod</code>方法，进行补救。但是方法不缓存。</li>
+<li>转发该方法。</li>
+</ul>
+</li>
+<li>抛出异常。</li>
+</ol>
+<p>这里，着重分析方法缓存。</p>
+<h4 id="方法缓存"><a href="#方法缓存" class="headerlink" title="方法缓存"></a>方法缓存</h4><p>在源码中，可以找到类的定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">objc_object</span> &#123;</span></span><br><span class="line">private:</span><br><span class="line">    <span class="type">isa_t</span> isa;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">objc_class</span> :</span> objc_object &#123;</span><br><span class="line">    <span class="comment">// Class ISA;</span></span><br><span class="line">    Class superclass;</span><br><span class="line">    <span class="type">cache_t</span> cache;             <span class="comment">// formerly cache pointer and vtable</span></span><br><span class="line">    <span class="type">class_data_bits_t</span> bits;    <span class="comment">// class_rw_t * plus custom rr/alloc flags</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从定义中不难看出，方法缓存的字段<code>cache</code>存储在类中，其定义为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bucket_t</span> &#123;</span></span><br><span class="line">private:</span><br><span class="line">    <span class="comment">// IMP-first is better for arm64e ptrauth and no worse for arm64.</span></span><br><span class="line">    <span class="comment">// SEL-first is better for armv7* and i386 and x86_64.</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> __arm64__</span></span><br><span class="line">    MethodCacheIMP _imp;</span><br><span class="line">    <span class="type">cache_key_t</span> _key;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">    <span class="type">cache_key_t</span> _key;</span><br><span class="line">    MethodCacheIMP _imp;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cache_t</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">bucket_t</span> *_<span class="title">buckets</span>;</span></span><br><span class="line">    <span class="type">mask_t</span> _mask;</span><br><span class="line">    <span class="type">mask_t</span> _occupied;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一个类的所有方法缓存，都在<code>cache_t</code>中的<code>_buckets</code>数组中。</p>
+<p>那么，objc_msgSend是怎么查找这个方法缓存的呢？</p>
+<p>这就需要借助源码来进一步分析（源码可以去官网下载，或者直接调试，断点objc_msgSend方法）。</p>
+<p>这里直接调试，断点<code>objc_msgSend</code>函数来进行分析：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">//MsgObject.h</span><br><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">NS_ASSUME_NONNULL_BEGIN</span><br><span class="line"></span><br><span class="line">@interface MsgObject : NSObject</span><br><span class="line"></span><br><span class="line">-(void)sl_test;</span><br><span class="line"></span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">NS_ASSUME_NONNULL_END</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//MsgObject.m</span><br><span class="line">#import &quot;MsgObject.h&quot;</span><br><span class="line"></span><br><span class="line">@implementation MsgObject</span><br><span class="line"></span><br><span class="line">-(void)sl_test&#123;</span><br><span class="line">    NSLog(@&quot;@_@&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//main.m</span><br><span class="line">#import &lt;UIKit/UIKit.h&gt;</span><br><span class="line">#import &quot;AppDelegate.h&quot;</span><br><span class="line">#import &quot;MsgObject.h&quot;</span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    NSString * appDelegateClassName;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        // Setup code that might create autoreleased objects goes here.</span><br><span class="line">        </span><br><span class="line">        MsgObject *m = [MsgObject new];</span><br><span class="line">        </span><br><span class="line">        [m sl_test];</span><br><span class="line">        </span><br><span class="line">        [m sl_test];//断点</span><br><span class="line">        </span><br><span class="line">        appDelegateClassName = NSStringFromClass([AppDelegate class]);</span><br><span class="line">    &#125;</span><br><span class="line">    return UIApplicationMain(argc, argv, nil, appDelegateClassName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>运行程序，触发断点，进入objc_msgSend方法内部：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">libobjc.A.dylib`objc_msgSend:</span><br><span class="line">-&gt;  0x1855b8140 &lt;+0&gt;:   cmp    x0, #0x0                  ; =0x0 </span><br><span class="line">    0x1855b8144 &lt;+4&gt;:   b.le   0x1855b81ac               ; &lt;+108&gt;</span><br><span class="line">    0x1855b8148 &lt;+8&gt;:   ldr    x13, [x0]</span><br><span class="line">    0x1855b814c &lt;+12&gt;:  and    x16, x13, #0xffffffff8</span><br><span class="line">    0x1855b8150 &lt;+16&gt;:  ldp    x10, x11, [x16, #0x10]</span><br><span class="line">    0x1855b8154 &lt;+20&gt;:  and    w12, w1, w11</span><br><span class="line">    0x1855b8158 &lt;+24&gt;:  add    x12, x10, x12, lsl #4</span><br><span class="line">    0x1855b815c &lt;+28&gt;:  ldp    x9, x17, [x12]</span><br><span class="line">    0x1855b8160 &lt;+32&gt;:  cmp    x9, x1</span><br><span class="line">    0x1855b8164 &lt;+36&gt;:  b.ne   0x1855b816c               ; &lt;+44&gt;</span><br><span class="line">    0x1855b8168 &lt;+40&gt;:  br     x17</span><br><span class="line">    0x1855b816c &lt;+44&gt;:  cbz    x9, 0x1855b8440           ; _objc_msgSend_uncached</span><br><span class="line">    0x1855b8170 &lt;+48&gt;:  cmp    x12, x10</span><br><span class="line">    0x1855b8174 &lt;+52&gt;:  b.eq   0x1855b8180               ; &lt;+64&gt;</span><br><span class="line">    0x1855b8178 &lt;+56&gt;:  ldp    x9, x17, [x12, #-0x10]!</span><br><span class="line">    0x1855b817c &lt;+60&gt;:  b      0x1855b8160               ; &lt;+32&gt;</span><br><span class="line">    0x1855b8180 &lt;+64&gt;:  add    x12, x12, w11, uxtw #4</span><br><span class="line">    0x1855b8184 &lt;+68&gt;:  ldp    x9, x17, [x12]</span><br><span class="line">    0x1855b8188 &lt;+72&gt;:  cmp    x9, x1</span><br><span class="line">    0x1855b818c &lt;+76&gt;:  b.ne   0x1855b8194               ; &lt;+84&gt;</span><br><span class="line">    0x1855b8190 &lt;+80&gt;:  br     x17</span><br><span class="line">    0x1855b8194 &lt;+84&gt;:  cbz    x9, 0x1855b8440           ; _objc_msgSend_uncached</span><br><span class="line">    0x1855b8198 &lt;+88&gt;:  cmp    x12, x10</span><br><span class="line">    0x1855b819c &lt;+92&gt;:  b.eq   0x1855b81a8               ; &lt;+104&gt;</span><br><span class="line">    0x1855b81a0 &lt;+96&gt;:  ldp    x9, x17, [x12, #-0x10]!</span><br><span class="line">    0x1855b81a4 &lt;+100&gt;: b      0x1855b8188               ; &lt;+72&gt;</span><br><span class="line">    0x1855b81a8 &lt;+104&gt;: b      0x1855b8440               ; _objc_msgSend_uncached</span><br><span class="line">    0x1855b81ac &lt;+108&gt;: b.eq   0x1855b81e4               ; &lt;+164&gt;</span><br><span class="line">    0x1855b81b0 &lt;+112&gt;: mov    x10, #-0x1000000000000000</span><br><span class="line">    0x1855b81b4 &lt;+116&gt;: cmp    x0, x10</span><br><span class="line">    0x1855b81b8 &lt;+120&gt;: b.hs   0x1855b81d0               ; &lt;+144&gt;</span><br><span class="line">    0x1855b81bc &lt;+124&gt;: adrp   x10, 161523</span><br><span class="line">    0x1855b81c0 &lt;+128&gt;: add    x10, x10, #0x270          ; =0x270 </span><br><span class="line">    0x1855b81c4 &lt;+132&gt;: lsr    x11, x0, #60</span><br><span class="line">    0x1855b81c8 &lt;+136&gt;: ldr    x16, [x10, x11, lsl #3]</span><br><span class="line">    0x1855b81cc &lt;+140&gt;: b      0x1855b8150               ; &lt;+16&gt;</span><br><span class="line">    0x1855b81d0 &lt;+144&gt;: adrp   x10, 161523</span><br><span class="line">    0x1855b81d4 &lt;+148&gt;: add    x10, x10, #0x2f0          ; =0x2f0 </span><br><span class="line">    0x1855b81d8 &lt;+152&gt;: ubfx   x11, x0, #52, #8</span><br><span class="line">    0x1855b81dc &lt;+156&gt;: ldr    x16, [x10, x11, lsl #3]</span><br><span class="line">    0x1855b81e0 &lt;+160&gt;: b      0x1855b8150               ; &lt;+16&gt;</span><br><span class="line">    0x1855b81e4 &lt;+164&gt;: mov    x1, #0x0</span><br><span class="line">    0x1855b81e8 &lt;+168&gt;: movi   d0, #0000000000000000</span><br><span class="line">    0x1855b81ec &lt;+172&gt;: movi   d1, #0000000000000000</span><br><span class="line">    0x1855b81f0 &lt;+176&gt;: movi   d2, #0000000000000000</span><br><span class="line">    0x1855b81f4 &lt;+180&gt;: movi   d3, #0000000000000000</span><br><span class="line">    0x1855b81f8 &lt;+184&gt;: ret    </span><br><span class="line">    0x1855b81fc &lt;+188&gt;: nop    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>整个方法的汇编，就是这个样子的。我们逐条指令分析（重点分析方法缓存查找部分）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0x1855b8140 &lt;+0&gt;:   cmp    x0, #0x0                  ; =0x0 </span><br><span class="line">0x1855b8144 &lt;+4&gt;:   b.le   0x1855b81ac               ; &lt;+108&gt;</span><br><span class="line">0x1855b8148 &lt;+8&gt;:   ldr    x13, [x0]</span><br><span class="line">0x1855b814c &lt;+12&gt;:  and    x16, x13, #0xffffffff8</span><br></pre></td></tr></table></figure>
+
+<p>函数一开始，通过<code>cmp</code>指令判断<code>X0</code>是否为nil，即判断self是否为nil，如果为nil，则跳到<code>0x1855b81ac</code>处执行。（实际上不只是nil，taggedpointer也会走这里）。<code>0x1855b81ac</code>处为处理self为空或者为taggedpointer的情况，这里不做研究。</p>
+<p><code>ldr</code>指令获取isa指针。事实上，自从引入taggerpoint之后，isa指针已经不是单纯的指针了，所以需要对其进行处理。而<code>and</code>指令，就是获取了真正的isa指针。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x1855b8150 &lt;+16&gt;:  ldp    x10, x11, [x16, #0x10]</span><br></pre></td></tr></table></figure>
+
+<p>上面几条指令，已经获取了isa指针，并存储在X16寄存器中，这条指令，是获取<code>cache</code>的。</p>
+<p>其中，<code>X10</code>中存储的是<code>_buckets</code>，而X11中存储的是<code>_mask</code>和<code>_occupied</code>。低32位，是<code>_mask</code>，高32位是<code>_occupied</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0x1855b8154 &lt;+20&gt;:  and    w12, w1, w11</span><br><span class="line">0x1855b8158 &lt;+24&gt;:  add    x12, x10, x12, lsl #4</span><br></pre></td></tr></table></figure>
+
+<p>这里，w1是<code>_cmd</code>的低32位，而w11是<code>_mask</code>，所以这句，实际上是<code>w12 = _cmd &amp; _mask</code>，旨在获取第一个要查找的<code>index</code>。</p>
+<p>而<code>add    x12, x10, x12, lsl #4</code>这条指令的意思是将X12寄存器的值左移4位（即乘以16），然后与X10寄存器中的值相加，并把结果存放在X12寄存器中。上面已经分析出，X10是<code>_buckets</code>数组，所以这条指令相当于<code>&amp;_buckets[W12]</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0x1855b815c &lt;+28&gt;:  ldp    x9, x17, [x12]</span><br><span class="line">0x1855b8160 &lt;+32&gt;:  cmp    x9, x1</span><br><span class="line">0x1855b8164 &lt;+36&gt;:  b.ne   0x1855b816c               ; &lt;+44&gt;</span><br><span class="line">0x1855b8168 &lt;+40&gt;:  br     x17</span><br></pre></td></tr></table></figure>
+
+<p>从上面可以得出，<code>X12=&amp;_buckets[W12]</code>，所以ldp指令就把该地址处存储的数据取出，分别存放在<code>X9</code>，<code>x17</code>中。由上面的<code>bucket_t</code>结构体定义可以看出，对于arm64，该处存储的方法的<code>imp</code>和<code>sel</code>。</p>
+<p><code>cmp    x9, x1</code>指令，说明了X9存储的是key，用key与sel比较，如果相等，则<code>br     x17</code>，所以X17中的是imp。这点，似乎和上面的定义有点出入。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bucket_t</span> &#123;</span></span><br><span class="line">private:</span><br><span class="line">    <span class="comment">// IMP-first is better for arm64e ptrauth and no worse for arm64.</span></span><br><span class="line">    <span class="comment">// SEL-first is better for armv7* and i386 and x86_64.</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> __arm64__</span></span><br><span class="line">    MethodCacheIMP _imp;</span><br><span class="line">    <span class="type">cache_key_t</span> _key;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">    <span class="type">cache_key_t</span> _key;</span><br><span class="line">    MethodCacheIMP _imp;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>源码中对<code>bucket_t</code>的定义，应该是imp在前，key在后的。此处有疑问。</p>
+<p>虽然位置不对，但其实并不影响我们分析。继续往下看：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x1855b816c &lt;+44&gt;:  cbz    x9, 0x1855b8440           ; _objc_msgSend_uncached</span><br></pre></td></tr></table></figure>
+
+<p>还是和key进行比较，如果key为0，则表示，没有缓存。就跳到<code>0x1855b8440</code>处执行。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0x1855b8170 &lt;+48&gt;:  cmp    x12, x10</span><br><span class="line">0x1855b8174 &lt;+52&gt;:  b.eq   0x1855b8180               ; &lt;+64&gt;</span><br><span class="line">0x1855b8178 &lt;+56&gt;:  ldp    x9, x17, [x12, #-0x10]!</span><br><span class="line">0x1855b817c &lt;+60&gt;:  b      0x1855b8160               ; &lt;+32&gt;</span><br><span class="line">0x1855b8180 &lt;+64&gt;:  add    x12, x12, w11, uxtw #4</span><br></pre></td></tr></table></figure>
+
+<p>此处，用X12和X10进行比较，上面已经说了，X12是当前index的位置，而X10是<code>_buckets</code>数组的起始位置，旨在判断当前位置是否在数组起始位置。如果是，则跳转到<code>0x1855b8180</code>处，而<code>0x1855b8180</code>处的指令<code>add    x12, x12, w11, uxtw #4</code>，是将X12（可以看成是一个指针）的值赋为数组的最后一个元素，即将指针移到数组末尾。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0x1855b8178 &lt;+56&gt;:  ldp    x9, x17, [x12, #-0x10]!</span><br><span class="line">0x1855b817c &lt;+60&gt;:  b      0x1855b8160               ; &lt;+32&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这两句，是一个loop循环。翻译为伪C代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldp    x9, x17, [x12, #-0x10]!	;====&gt;&#123;X9,X17&#125; = *X12		--X12</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">0x1855b8180 &lt;+64&gt;:  add    x12, x12, w11, uxtw #4</span><br><span class="line">0x1855b8184 &lt;+68&gt;:  ldp    x9, x17, [x12]</span><br><span class="line">0x1855b8188 &lt;+72&gt;:  cmp    x9, x1</span><br><span class="line">0x1855b818c &lt;+76&gt;:  b.ne   0x1855b8194               ; &lt;+84&gt;</span><br><span class="line">0x1855b8190 &lt;+80&gt;:  br     x17</span><br><span class="line">0x1855b8194 &lt;+84&gt;:  cbz    x9, 0x1855b8440           ; _objc_msgSend_uncached</span><br><span class="line">0x1855b8198 &lt;+88&gt;:  cmp    x12, x10</span><br><span class="line">0x1855b819c &lt;+92&gt;:  b.eq   0x1855b81a8               ; &lt;+104&gt;</span><br><span class="line">0x1855b81a0 &lt;+96&gt;:  ldp    x9, x17, [x12, #-0x10]!</span><br><span class="line">0x1855b81a4 &lt;+100&gt;: b      0x1855b8188               ; &lt;+72&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这段汇编，是不是感觉很熟悉。因为在前 出现过一次，这其实也是一个循环。翻译一下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">X12 += w11;<span class="comment">//指针加法，步长为16Byte</span></span><br><span class="line"><span class="keyword">do</span>&#123;</span><br><span class="line">  &#123;x9,x17&#125; = *x12;</span><br><span class="line">  <span class="keyword">if</span>(x9 == x1)</span><br><span class="line">  &#123;</span><br><span class="line">    x17();<span class="comment">//调用imp</span></span><br><span class="line">  &#125;<span class="keyword">else</span>(x9 != x1 &amp;&amp; x9 == <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    _objc_msgSend_uncached();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;<span class="keyword">while</span>(X12 != X10;X12--)</span><br></pre></td></tr></table></figure>
+
+<p>这整个过程，就是方法缓存的查找过程。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS%E5%BC%80%E5%8F%91/" rel="tag"><i class="fa fa-tag"></i> iOS开发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/01/01/Overview-of-AArch64-state-translation-4/" rel="next" title="ARM文档翻译（四）----指令篇（二）">
+                <i class="fa fa-chevron-left"></i> ARM文档翻译（四）----指令篇（二）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/01/09/Overview-of-AArch64-state-translation-5/" rel="prev" title="ARM文档翻译（五）----指令篇（三）">
+                ARM文档翻译（五）----指令篇（三） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#OC%E6%96%B9%E6%B3%95%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">OC方法执行流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E7%BC%93%E5%AD%98"><span class="nav-number">2.</span> <span class="nav-text">方法缓存</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

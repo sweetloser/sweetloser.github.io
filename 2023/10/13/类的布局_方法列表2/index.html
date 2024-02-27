@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="在上一篇的demo中，增加几个类方法： 1234567891011121314151617181920212223242526272829&#x2F;&#x2F;  ObjectA.h@interface ObjectA : NSObject@property(nonatomic,assign,readonly)BOOL b;- (void)funcA;- (void)funcB:(NSString *)str;+">
+<meta property="og:type" content="article">
+<meta property="og:title" content="类的布局——方法列表（2）">
+<meta property="og:url" content="https://www.sweetloser.com/2023/10/13/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A82/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="在上一篇的demo中，增加几个类方法： 1234567891011121314151617181920212223242526272829&#x2F;&#x2F;  ObjectA.h@interface ObjectA : NSObject@property(nonatomic,assign,readonly)BOOL b;- (void)funcA;- (void)funcB:(NSString *)str;+">
+<meta property="og:locale">
+<meta property="article:published_time" content="2023-10-13T09:39:20.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.640Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2023/10/13/类的布局_方法列表2/"/>
+
+
+
+
+
+  <title>类的布局——方法列表（2） | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2023/10/13/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A82/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">类的布局——方法列表（2）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-10-13T17:39:20+08:00">
+                2023-10-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2023/10/13/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A82/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2023/10/13/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A82/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  765 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  3 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在上一篇的demo中，增加几个类方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">//  ObjectA.h</span><br><span class="line">@interface ObjectA : NSObject</span><br><span class="line"></span><br><span class="line">@property(nonatomic,assign,readonly)BOOL b;</span><br><span class="line"></span><br><span class="line">- (void)funcA;</span><br><span class="line">- (void)funcB:(NSString *)str;</span><br><span class="line"></span><br><span class="line">+ (void)funcC;</span><br><span class="line">+ (void)funcD:(NSString *)str;</span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">//  ObjectA.m</span><br><span class="line">#import &quot;ObjectA.h&quot;</span><br><span class="line">@implementation ObjectA</span><br><span class="line">- (void)funcA &#123;</span><br><span class="line">    NSLog(@&quot;方法A&quot;);</span><br><span class="line">&#125;</span><br><span class="line">- (void)funcB:(NSString *)str &#123;</span><br><span class="line">    NSLog(@&quot;方法B：%@&quot;, str);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (void)funcC &#123;</span><br><span class="line">    NSLog(@&quot;类方法C&quot;);</span><br><span class="line">&#125;</span><br><span class="line">+ (void)funcD:(NSString *)str &#123;</span><br><span class="line">    NSLog(@&quot;类方法D: %@&quot;, str);</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+
+<p>用代码输出方法信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br></pre></td><td class="code"><pre><span class="line">// 定义 ISA_MASK 用于获取isa指针</span><br><span class="line">#if __arm64__</span><br><span class="line">#if TARGET_OS_EXCLAVEKIT</span><br><span class="line">#define ISA_MASK        0xfffffffffffffff8ULL</span><br><span class="line">#elif __has_feature(ptrauth_calls) || TARGET_OS_SIMULATOR</span><br><span class="line">#define ISA_MASK        0x007ffffffffffff8ULL</span><br><span class="line">#else</span><br><span class="line">#define ISA_MASK        0x0000000ffffffff8ULL</span><br><span class="line">#endif</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">// 定义 FAST_DATA_MASK 用于获取class_rw_t</span><br><span class="line">#if TARGET_OS_EXCLAVEKIT</span><br><span class="line">#define FAST_DATA_MASK          0x0000001ffffffff8UL</span><br><span class="line">#elif TARGET_OS_IPHONE &amp;&amp; !TARGET_OS_SIMULATOR</span><br><span class="line">#define FAST_DATA_MASK          0x0f00007ffffffff8UL</span><br><span class="line">#else</span><br><span class="line">#define FAST_DATA_MASK          0x0f007ffffffffff8UL</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">// 定义方法结构体</span><br><span class="line">struct method_t &#123;</span><br><span class="line">    SEL sel;</span><br><span class="line">    char *types;</span><br><span class="line">    IMP imp;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// 定义方法列表结构体</span><br><span class="line">struct method_list_t &#123;</span><br><span class="line">    uint32_t entsizeAndFlags;</span><br><span class="line">    uint32_t count;</span><br><span class="line">    struct method_t elements[0];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// 从实例对象中获取isa指针</span><br><span class="line">BytePtr _isaForObject(NSObject *obj) &#123;</span><br><span class="line">    if (obj == nil) return NULL;</span><br><span class="line">    struct _object &#123;</span><br><span class="line">        BytePtr isa;</span><br><span class="line">    &#125;;</span><br><span class="line">    struct _object *obj_ptr = (struct _object *)(__bridge void *)obj;</span><br><span class="line">    return (BytePtr)((int64_t)obj_ptr-&gt;isa &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 从isa指针中获取方法列表和方法数</span><br><span class="line">void _methodsWithIsa(BytePtr isa, struct method_t **methods, uint32_t *count) &#123;</span><br><span class="line">    // 获取isa中的bits</span><br><span class="line">    uintptr_t bits = *((uintptr_t *)(isa + 8/*isa*/ + 8/*superclass*/ + 16/*cache*/));</span><br><span class="line">    </span><br><span class="line">    // 获取 class_rw_t</span><br><span class="line">    uintptr_t class_rw_t = bits &amp; FAST_DATA_MASK;</span><br><span class="line">    </span><br><span class="line">    // 获取 ro_or_rw_ext</span><br><span class="line">    uintptr_t ro_or_rw_ext = *((uintptr_t *)(class_rw_t + 0x8));</span><br><span class="line">    </span><br><span class="line">    // 获取class_ro_t</span><br><span class="line">    // 判断是class_rw_ext_t 还是 class_ro_t</span><br><span class="line">    uintptr_t class_ro_t = ro_or_rw_ext;</span><br><span class="line">    if (ro_or_rw_ext &amp; 0x1) &#123;</span><br><span class="line">        // class_rw_ext_t</span><br><span class="line">        class_ro_t = *((uintptr_t *)ro_or_rw_ext);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // 获取class_ro_t 中的 baseMethods</span><br><span class="line">    uintptr_t baseMethods = *(uintptr_t *)(class_ro_t + 4/*flags*/ + 4/*instanceStart*/ + 4/*instanceSize*/ + 4/*reserved*/ + 8/*ivarLayout*/ + 8/*name*/);</span><br><span class="line">    </span><br><span class="line">    struct method_list_t *_method_list_t = (struct method_list_t *)baseMethods;</span><br><span class="line">    *count = _method_list_t-&gt;count;</span><br><span class="line">    *methods = _method_list_t-&gt;elements;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// 输出方法信息</span><br><span class="line">void _printMethods(struct method_t *methods, uint32_t count) &#123;</span><br><span class="line">    struct method_t *node = methods;</span><br><span class="line">    for (int i=0; i&lt;count; i++) &#123;</span><br><span class="line">        printf(&quot;=============================\n&quot;);</span><br><span class="line">        printf(&quot;SEL:%s\n&quot;, sel_getName(node-&gt;sel));</span><br><span class="line">        printf(&quot;types:%s\n&quot;,node-&gt;types);</span><br><span class="line">        printf(&quot;imp:0x%lx\n&quot;,(uintptr_t)node-&gt;imp);</span><br><span class="line">        node++;</span><br><span class="line">    &#125;</span><br><span class="line">    printf(&quot;=============================\n&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 调用</span><br><span class="line">	ObjectA *aObj = [[ObjectA alloc] init];</span><br><span class="line"></span><br><span class="line">  BytePtr a_isa = _isaForObject(aObj);   </span><br><span class="line">	struct method_t *method = NULL;</span><br><span class="line">  uint32_t count;</span><br><span class="line">  _methodsWithIsa(a_isa, &amp;method, &amp;count);</span><br><span class="line">  _printMethods(method, count);</span><br><span class="line"></span><br><span class="line">// 输出如下：</span><br><span class="line">=============================</span><br><span class="line">SEL:funcA</span><br><span class="line">types:v16@0:8</span><br><span class="line">imp:0x1009b5c58</span><br><span class="line">=============================</span><br><span class="line">SEL:funcB:</span><br><span class="line">types:v24@0:8@16</span><br><span class="line">imp:0x1009b5c84</span><br><span class="line">=============================</span><br><span class="line">SEL:b</span><br><span class="line">types:B16@0:8</span><br><span class="line">imp:0x1009b5d78</span><br><span class="line">=============================</span><br></pre></td></tr></table></figure>
+
+<p>不难发现，刚刚新增的两个类方法并没有被输出。</p>
+<p>原因是因为类方法和实例方法并不是存放在一起；在OC的设计中，有<code>类的类</code>的说法，即我们日常开发中的<code>元类</code>。而我们定义的类方法，就存储在<code>元类</code>中。</p>
+<p>回顾一下类的定义：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;			// 继承自 struct objc_object</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;</span><br><span class="line">	  class_rw_t *data() const &#123;</span><br><span class="line">  	     return bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>之前我们把重心放在了<code>bits</code>上，现在我们回过头分析一下它的整个结构，就会发现，它也有一个isa指针（继承自<code>objc_object</code>）。元类就存储在类对象的<code>isa</code>中。<code>元类</code>也是<code>objc_class</code>类型。</p>
+<p><code>元类</code>也是<code>objc_class</code>结构体，那我们一样可以用上面的代码去解析它的方法列表（元类中只存储类方法）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">ObjectA *aObj = [[ObjectA alloc] init];</span><br><span class="line">    </span><br><span class="line">BytePtr a_isa = _isaForObject((NSObject *)aObj);		// 获取aObj的isa指针 （类对象）</span><br><span class="line">BytePtr meta_isa = _isaForObject((__bridge NSObject *)(void *)a_isa);		// 获取类对象的isa指针</span><br><span class="line">struct method_t *method = NULL;</span><br><span class="line">uint32_t count;</span><br><span class="line">_methodsWithIsa(meta_isa, &amp;method, &amp;count);</span><br><span class="line">_printMethods(method, count);</span><br><span class="line"></span><br><span class="line">// 输出</span><br><span class="line">=============================</span><br><span class="line">SEL:funcC</span><br><span class="line">types:v16@0:8</span><br><span class="line">imp:0x100cf5ce8</span><br><span class="line">=============================</span><br><span class="line">SEL:funcD:</span><br><span class="line">types:v24@0:8@16</span><br><span class="line">imp:0x100cf5d14</span><br><span class="line">=============================</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag"><i class="fa fa-tag"></i> iOS</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/" rel="next" title="类的布局——方法列表（1）">
+                <i class="fa fa-chevron-left"></i> 类的布局——方法列表（1）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2023/10/15/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E7%BC%93%E5%AD%98hash%E8%A1%A8/" rel="prev" title="类的布局——方法缓存hash表">
+                类的布局——方法缓存hash表 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

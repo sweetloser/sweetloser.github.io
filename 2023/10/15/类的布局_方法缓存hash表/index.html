@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="回顾一下class的结构： 123456789struct objc_class : objc_object &amp;#123;    &#x2F;&#x2F; Class ISA;			&#x2F;&#x2F; 继承自 struct objc_object    Class superclass;    cache_t cache;             &#x2F;&#x2F; formerly cache pointer and vtable    cl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="类的布局——方法缓存hash表">
+<meta property="og:url" content="https://www.sweetloser.com/2023/10/15/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E7%BC%93%E5%AD%98hash%E8%A1%A8/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="回顾一下class的结构： 123456789struct objc_class : objc_object &amp;#123;    &#x2F;&#x2F; Class ISA;			&#x2F;&#x2F; 继承自 struct objc_object    Class superclass;    cache_t cache;             &#x2F;&#x2F; formerly cache pointer and vtable    cl">
+<meta property="og:locale">
+<meta property="article:published_time" content="2023-10-15T03:47:34.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.641Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2023/10/15/类的布局_方法缓存hash表/"/>
+
+
+
+
+
+  <title>类的布局——方法缓存hash表 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2023/10/15/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E7%BC%93%E5%AD%98hash%E8%A1%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">类的布局——方法缓存hash表</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-10-15T11:47:34+08:00">
+                2023-10-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2023/10/15/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E7%BC%93%E5%AD%98hash%E8%A1%A8/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2023/10/15/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E7%BC%93%E5%AD%98hash%E8%A1%A8/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  1.3k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  6 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>回顾一下class的结构：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">objc_class</span> : objc_object &#123;</span><br><span class="line">    <span class="comment">// Class ISA;			// 继承自 struct objc_object</span></span><br><span class="line">    Class superclass;</span><br><span class="line">    <span class="type">cache_t</span> cache;             <span class="comment">// formerly cache pointer and vtable</span></span><br><span class="line">    <span class="type">class_data_bits_t</span> bits;</span><br><span class="line">	  <span class="function"><span class="type">class_rw_t</span> *<span class="title">data</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">  	     <span class="keyword">return</span> bits.<span class="built_in">data</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>不难发现，在<code>objc_class</code>结构中，有一个<code>cache_t</code>类型的成员变量<code>cache</code>。</p>
+<p>其结构如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">bucket_t</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	IMP _imp;</span><br><span class="line">	SEL _sel;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">cache_t</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">uintptr_t</span> _bucketsAndMaybeMask;</span><br><span class="line">    <span class="keyword">union</span> &#123;</span><br><span class="line">        <span class="keyword">struct</span> &#123;</span><br><span class="line">            <span class="type">uint32_t</span> _unused;</span><br><span class="line">            <span class="type">uint16_t</span> _occupied;</span><br><span class="line">            <span class="type">uint16_t</span> _flags;</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="type">preopt_cache_t</span> * _originalPreoptCache;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// objc-cache.m</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">uintptr_t</span> maskShift = <span class="number">48</span>;</span><br><span class="line"><span class="comment">// Additional bits after the mask which must be zero. msgSend</span></span><br><span class="line"><span class="comment">// takes advantage of these additional bits to construct the value</span></span><br><span class="line"><span class="comment">// `mask &lt;&lt; 4` from `_maskAndBuckets` in a single instruction.</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">uintptr_t</span> maskZeroBits = <span class="number">4</span>;</span><br><span class="line"><span class="comment">// The largest mask value we can store.</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">uintptr_t</span> maxMask = ((<span class="type">uintptr_t</span>)<span class="number">1</span> &lt;&lt; (<span class="number">64</span> - maskShift)) - <span class="number">1</span>;</span><br><span class="line"><span class="comment">// The mask applied to `_maskAndBuckets` to retrieve the buckets pointer.</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">uintptr_t</span> bucketsMask = ((<span class="type">uintptr_t</span>)<span class="number">1</span> &lt;&lt; (maskShift - maskZeroBits)) - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">bucket_t</span> *<span class="type">cache_t</span>::<span class="built_in">buckets</span>() <span class="type">const</span> &#123;</span><br><span class="line">    <span class="type">uintptr_t</span> addr = _bucketsAndMaybeMask;</span><br><span class="line">    <span class="keyword">return</span> (<span class="type">bucket_t</span> *)(addr &amp; bucketsMask);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 哈希表已用</span></span><br><span class="line"><span class="function"><span class="type">mask_t</span> <span class="title">cache_t::occupied</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> _occupied;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 哈希表容积</span></span><br><span class="line"><span class="function"><span class="type">unsigned</span> <span class="title">cache_t::capacity</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">mask</span>() ? <span class="built_in">mask</span>()+<span class="number">1</span> : <span class="number">0</span>; </span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">mask_t</span> <span class="title">cache_t::mask</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="type">uintptr_t</span> maskAndBuckets = _bucketsAndMaybeMask;</span><br><span class="line">    <span class="keyword">return</span> maskAndBuckets &gt;&gt; maskShift;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 通过查看<code>cache_t</code>和<code>bucket_t</code>的结构以及其实现，可以很清晰的看到类的整个缓存表的内容。</p>
+<p>接下来用lldb简单验证下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">//  CacheClass.h</span><br><span class="line">@interface CacheClass : NSObject</span><br><span class="line">- (void)cacheMethodA;</span><br><span class="line">- (void)cacheMethodB:(NSString *)str;</span><br><span class="line">- (void)cacheMethodC:(NSUInteger)integer andString:(NSString *)str;</span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">//  CacheClass.m</span><br><span class="line">#import &quot;CacheClass.h&quot;</span><br><span class="line">@implementation CacheClass</span><br><span class="line">- (void)cacheMethodA &#123;</span><br><span class="line">    NSLog(@&quot;%s&quot;, __func__);</span><br><span class="line">&#125;</span><br><span class="line">- (void)cacheMethodB:(NSString *)str &#123;</span><br><span class="line">    NSLog(@&quot;%@===&gt;%s&quot;, str, __func__);</span><br><span class="line">&#125;</span><br><span class="line">- (void)cacheMethodC:(NSUInteger)integer andString:(NSString *)str &#123;</span><br><span class="line">    NSLog(@&quot;%lu====&gt;%@===&gt;%s&quot;, integer, str, __func__);</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br><span class="line">  </span><br><span class="line">// 调用</span><br><span class="line">  CacheClass *cacheObj = [[CacheClass alloc] init];</span><br><span class="line">  [cacheObj cacheMethodA];</span><br><span class="line">  NSLog(@&quot;====================&quot;);			// 此行断点</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取CacheObj的isa</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">1</span>gx cacheObj</span><br><span class="line"><span class="number">0x281da0bc0</span>: <span class="number">0x0100000102c2d101</span></span><br><span class="line">(lldb) p/x <span class="number">0x0100000102c2d101</span> &amp; <span class="number">0x0000000ffffffff8</span>ULL</span><br><span class="line">(<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span>) $<span class="number">4</span> = <span class="number">0x0000000102c2d100</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>读取<code>cache_t</code>结构体：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">2</span>gx <span class="number">0x0000000102c2d100</span>+<span class="number">0x10</span>		<span class="comment">// 此处+0x10是因为cache是在`objc_class`结构体的第16字节处开始。</span></span><br><span class="line"><span class="number">0x102c2d110</span>: <span class="number">0x0001000281f850c0</span> <span class="number">0x8010000200000000</span>	<span class="comment">// 0x0001000281f850c0 为 _bucketsAndMaybeMask的值 	0x8010000200000000 为 联合体的值</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取<code>bucket_t</code>数组的首地址：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) p/x ((<span class="type">uintptr_t</span>)<span class="number">1</span> &lt;&lt; (<span class="number">48</span><span class="number">-4</span>))<span class="number">-1</span>		<span class="comment">// 计算 bucketsMask 的值</span></span><br><span class="line">(<span class="type">unsigned</span> <span class="type">long</span>) $<span class="number">4</span> = <span class="number">0x00000fffffffffff</span></span><br><span class="line">(lldb) p/x <span class="number">0x0001000281f850c0</span> &amp; <span class="number">0x00000fffffffffff</span>  <span class="comment">// _bucketsAndMaybeMask &amp; bucketsMask</span></span><br><span class="line">(<span class="type">long</span>) $<span class="number">5</span> = <span class="number">0x0000000281f850c0</span>	<span class="comment">// bucket_t数组的首地址</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取<code>bucket_t</code>数组的count：</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(lldb) p/<span class="built_in">x</span> (<span class="number">0x0001000281f850c0</span> &gt;&gt; <span class="number">48</span>) + <span class="number">1</span>		<span class="comment">// 相当于调用cache_t::capacity()函数</span></span><br><span class="line">(<span class="type">long</span>) $<span class="number">9</span> = <span class="number">0x0000000000000002</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>输出<code>bucket_t</code>数组的内容：</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">4</span>gx <span class="number">0x0000000281f850c0</span></span><br><span class="line"><span class="number">0x281f850c0</span>: <span class="number">0x58226481ad686ff0</span> <span class="number">0x00000001b0870410</span></span><br><span class="line"><span class="number">0x281f850d0</span>: <span class="number">0x3c04798102c25d08</span> <span class="number">0x0000000102c26f97</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>以{IMP,SEL}的结构验证：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">(lldb) p (<span class="type">char</span> *)<span class="number">0x00000001b0870410</span></span><br><span class="line">(<span class="type">char</span> *) $<span class="number">10</span> = <span class="number">0x00000001b0870410</span> <span class="string">&quot;init&quot;</span></span><br><span class="line">(lldb) dis -a <span class="number">0x58226481ad686ff0</span></span><br><span class="line">libobjc.A.dylib`-[NSObject init]:</span><br><span class="line">    <span class="number">0x1ad686ff0</span> &lt;+<span class="number">0</span>&gt;: ret    </span><br><span class="line">    <span class="number">0x1ad686ff4</span> &lt;+<span class="number">4</span>&gt;: udf    #<span class="number">0x0</span></span><br><span class="line">    <span class="number">0x1ad686ff8</span> &lt;+<span class="number">8</span>&gt;: udf    #<span class="number">0x0</span></span><br><span class="line">(lldb) p (<span class="type">char</span> *)<span class="number">0x0000000102c26f97</span></span><br><span class="line">(<span class="type">char</span> *) $<span class="number">11</span> = <span class="number">0x0000000102c26f97</span> <span class="string">&quot;cacheMethodA&quot;</span></span><br><span class="line">(lldb) dis -a <span class="number">0x3c04798102c25d08</span></span><br><span class="line">MethodCacheDemo`-[CacheClass cacheMethodA]:</span><br><span class="line">    <span class="number">0x102c25d08</span> &lt;+<span class="number">0</span>&gt;:  sub    sp, sp, #<span class="number">0x30</span></span><br><span class="line">    <span class="number">0x102c25d0c</span> &lt;+<span class="number">4</span>&gt;:  stp    x29, x30, [sp, #<span class="number">0x20</span>]</span><br><span class="line">    <span class="number">0x102c25d10</span> &lt;+<span class="number">8</span>&gt;:  add    x29, sp, #<span class="number">0x20</span></span><br><span class="line">    <span class="number">0x102c25d14</span> &lt;+<span class="number">12</span>&gt;: stur   x0, [x29, #<span class="number">-0x8</span>]</span><br><span class="line">    <span class="number">0x102c25d18</span> &lt;+<span class="number">16</span>&gt;: str    x1, [sp, #<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x102c25d1c</span> &lt;+<span class="number">20</span>&gt;: mov    x9, sp</span><br><span class="line">    <span class="number">0x102c25d20</span> &lt;+<span class="number">24</span>&gt;: adrp   x8, <span class="number">2</span></span><br><span class="line">    <span class="number">0x102c25d24</span> &lt;+<span class="number">28</span>&gt;: add    x8, x8, #<span class="number">0x363</span>            ; <span class="string">&quot;-[CacheClass cacheMethodA]&quot;</span></span><br><span class="line">    <span class="number">0x102c25d28</span> &lt;+<span class="number">32</span>&gt;: str    x8, [x9]</span><br><span class="line">    <span class="number">0x102c25d2c</span> &lt;+<span class="number">36</span>&gt;: adrp   x0, <span class="number">3</span></span><br><span class="line">    <span class="number">0x102c25d30</span> &lt;+<span class="number">40</span>&gt;: add    x0, x0, #<span class="number">0x90</span>             ; @<span class="string">&quot;%s&quot;</span></span><br><span class="line">    <span class="number">0x102c25d34</span> &lt;+<span class="number">44</span>&gt;: bl     <span class="number">0x102c26344</span>               ; symbol stub <span class="keyword">for</span>: NSLog</span><br><span class="line">    <span class="number">0x102c25d38</span> &lt;+<span class="number">48</span>&gt;: ldp    x29, x30, [sp, #<span class="number">0x20</span>]</span><br><span class="line">    <span class="number">0x102c25d3c</span> &lt;+<span class="number">52</span>&gt;: add    sp, sp, #<span class="number">0x30</span></span><br><span class="line">    <span class="number">0x102c25d40</span> &lt;+<span class="number">56</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+
+<p>从输出结果可以看出，缓存数组位置是正确的，类<code>CacheClass</code>缓存了两个方法，分别为：<code>-[NSObject init]</code>、<code>-[CacheClass cacheMethodA]</code>。</p>
+<p>用代码获取：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> __arm64__</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> TARGET_OS_EXCLAVEKIT</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ISA_MASK        0xfffffffffffffff8ULL</span></span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> __has_feature(ptrauth_calls) || TARGET_OS_SIMULATOR</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ISA_MASK        0x007ffffffffffff8ULL</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ISA_MASK        0x0000000ffffffff8ULL</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">uintptr_t _isaForObject(<span class="built_in">NSObject</span> *obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj == <span class="literal">nil</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">struct</span> _object &#123;</span><br><span class="line">        BytePtr isa;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">struct</span> _object *obj_ptr = (<span class="keyword">struct</span> _object *)(__bridge <span class="type">void</span> *)obj;</span><br><span class="line">    <span class="keyword">return</span> (uintptr_t)((uintptr_t)obj_ptr-&gt;isa &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> uint32_t mask_t;</span><br><span class="line"><span class="comment">//cache_t源码模仿</span></span><br><span class="line"><span class="keyword">const</span> uintptr_t maskShift = <span class="number">48</span>;</span><br><span class="line"><span class="keyword">const</span> uintptr_t maskZeroBits = <span class="number">4</span>;</span><br><span class="line"><span class="keyword">const</span> uintptr_t maxMask = (((uintptr_t)<span class="number">1</span> &lt;&lt; (<span class="number">64</span> - maskShift))<span class="number">-1</span>);</span><br><span class="line"><span class="keyword">const</span> uintptr_t bucketsMask = ((uintptr_t)<span class="number">1</span> &lt;&lt; (maskShift - maskZeroBits)) - <span class="number">1</span>; <span class="comment">//0x100000000000-1 = 0xfffffffffff</span></span><br><span class="line"><span class="keyword">struct</span> bucket_t &#123;</span><br><span class="line">    IMP _imp;</span><br><span class="line">    SEL _sel;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> cache_t &#123;</span><br><span class="line">    uintptr_t _bucketsAndMaybeMask; <span class="comment">// 8</span></span><br><span class="line">    <span class="keyword">union</span> &#123;</span><br><span class="line">        <span class="keyword">struct</span> &#123;</span><br><span class="line">            uint32_t _unused;</span><br><span class="line">            uint16_t _occupied;</span><br><span class="line">            uint16_t _flags;</span><br><span class="line">        &#125;;</span><br><span class="line">        uintptr_t _originalPreoptCache; <span class="comment">// 8</span></span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> bucket_t *buckets(<span class="keyword">struct</span> cache_t *cache) &#123;</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">struct</span> bucket_t *)(cache-&gt;_bucketsAndMaybeMask &amp; bucketsMask);</span><br><span class="line">&#125;</span><br><span class="line">uint32_t mask(<span class="keyword">struct</span> cache_t *cache) &#123;</span><br><span class="line">    <span class="keyword">return</span> (uint32_t)(cache-&gt;_bucketsAndMaybeMask &gt;&gt; maskShift);</span><br><span class="line">&#125;</span><br><span class="line">uint32_t capacity(<span class="keyword">struct</span> cache_t *cache) &#123;</span><br><span class="line">    <span class="keyword">return</span> mask(cache) ? mask(cache)+<span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line">mask_t occupied(<span class="keyword">struct</span> cache_t *cache) &#123;</span><br><span class="line">    <span class="keyword">return</span>  cache-&gt;_occupied;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> _printMethodCaches(<span class="type">id</span> obj) &#123;</span><br><span class="line">    printf(<span class="string">&quot;============================\n&quot;</span>);</span><br><span class="line">    uintptr_t isa = _isaForObject(obj);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 读取cache结构体</span></span><br><span class="line">    <span class="keyword">struct</span> cache_t *cache = (<span class="keyword">struct</span> cache_t *)(isa + <span class="number">0x10</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 读取bucket_t</span></span><br><span class="line">    <span class="keyword">struct</span> bucket_t *bucket_array = buckets(cache);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取count</span></span><br><span class="line">    uint32_t count = capacity(cache);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取已缓存数</span></span><br><span class="line">    uint32_t occupied_count = occupied(cache);</span><br><span class="line">    </span><br><span class="line">    printf(<span class="string">&quot;哈希表容积：%u\t\t\t已缓存方法数：%u\n&quot;</span>,count, occupied_count);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 输出缓存内容</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> c = <span class="number">0</span>; c &lt; count; c++) &#123;</span><br><span class="line">        <span class="keyword">struct</span> bucket_t *bucket = (bucket_array + c);</span><br><span class="line">        printf(<span class="string">&quot;imp-&gt;sel:0x%lx-&gt;%s\n&quot;</span>, (intptr_t)bucket-&gt;_imp, sel_getName(bucket-&gt;_sel));</span><br><span class="line">    &#125;</span><br><span class="line">    printf(<span class="string">&quot;============================\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用</span></span><br><span class="line">		CacheClass *cacheObj = [[CacheClass alloc] init];</span><br><span class="line">    [cacheObj cacheMethodA];</span><br><span class="line">    _printMethodCaches(cacheObj);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line">============================</span><br><span class="line">哈希表容积：<span class="number">2</span>			已缓存方法数：<span class="number">2</span></span><br><span class="line">imp-&gt;sel:<span class="number">0x4f5fd201ad686ff0</span>-&gt;init</span><br><span class="line">imp-&gt;sel:<span class="number">0xe9344e810494dc50</span>-&gt;cacheMethodA</span><br><span class="line">============================</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，缓存哈希表有一个扩容的过程，当缓存方法超过了哈希表容积时，就会触发扩容，此时，之前的缓存并不会被复制到新的hash表中，而是重新还是缓存！</p>
+<p>例如上面的调用修改为如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">CacheClass *cacheObj = [[CacheClass alloc] init];</span><br><span class="line">  [cacheObj cacheMethodA];</span><br><span class="line">  [cacheObj cacheMethodB:@&quot;B&quot;];</span><br><span class="line">  </span><br><span class="line">  _printMethodCaches(cacheObj);</span><br></pre></td></tr></table></figure>
+
+<p>则输出为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">============================</span><br><span class="line">哈希表容积：4			已缓存方法数：1</span><br><span class="line">imp-&gt;sel:0x0-&gt;&lt;null selector&gt;</span><br><span class="line">imp-&gt;sel:0x0-&gt;&lt;null selector&gt;</span><br><span class="line">imp-&gt;sel:0xf85bf08100269c6c-&gt;cacheMethodB:</span><br><span class="line">imp-&gt;sel:0x0-&gt;&lt;null selector&gt;</span><br><span class="line">============================</span><br></pre></td></tr></table></figure>
+
+<p>从上面的输出可以看出，调用方法<code>-[CacheClass cacheMethodB:]</code>时，触发了缓存表扩容；扩容过程中，它舍弃了原缓存表中的方法，仅缓存了当前方法（<code>-[CacheClass cacheMethodB:]</code>）。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag"><i class="fa fa-tag"></i> iOS</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2023/10/13/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A82/" rel="next" title="类的布局——方法列表（2）">
+                <i class="fa fa-chevron-left"></i> 类的布局——方法列表（2）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2024/02/26/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/" rel="prev" title="冒泡排序">
+                冒泡排序 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

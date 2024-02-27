@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="ARM," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="A64常用指令介绍A64常用指令 A64指令的寄存器限制在A64指令中，通用寄存器对于32位寄存器是W0-W30，对于64位寄存器是X0-X30。 不能通过数字来引用31寄存器，在一些指令说明中，可以使用以下名称来引用它： WSP ​		当前的栈指针（32bit） SP ​		当前的栈指针（64bit） WZR ​		零寄存器（32bit） XZR ​		零寄存器（64bit） 在指令语法中，只能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ARM文档翻译（三）----指令篇（一）">
+<meta property="og:url" content="https://www.sweetloser.com/2019/12/16/Overview-of-AArch64-state-translation-3/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="A64常用指令介绍A64常用指令 A64指令的寄存器限制在A64指令中，通用寄存器对于32位寄存器是W0-W30，对于64位寄存器是X0-X30。 不能通过数字来引用31寄存器，在一些指令说明中，可以使用以下名称来引用它： WSP ​		当前的栈指针（32bit） SP ​		当前的栈指针（64bit） WZR ​		零寄存器（32bit） XZR ​		零寄存器（64bit） 在指令语法中，只能">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-12-15T16:16:53.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.560Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="ARM">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2019/12/16/Overview-of-AArch64-state-translation-3/"/>
+
+
+
+
+
+  <title>ARM文档翻译（三）----指令篇（一） | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2019/12/16/Overview-of-AArch64-state-translation-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">ARM文档翻译（三）----指令篇（一）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-16T00:16:53+08:00">
+                2019-12-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ARM/" itemprop="url" rel="index">
+                    <span itemprop="name">ARM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/12/16/Overview-of-AArch64-state-translation-3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/12/16/Overview-of-AArch64-state-translation-3/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  2.5k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  9 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="A64常用指令"><a href="#A64常用指令" class="headerlink" title="A64常用指令"></a>A64常用指令</h4><p>介绍A64常用指令</p>
+<h5 id="A64指令的寄存器限制"><a href="#A64指令的寄存器限制" class="headerlink" title="A64指令的寄存器限制"></a>A64指令的寄存器限制</h5><p>在A64指令中，通用寄存器对于32位寄存器是W0-W30，对于64位寄存器是X0-X30。</p>
+<p>不能通过数字来引用31寄存器，在一些指令说明中，可以使用以下名称来引用它：</p>
+<p><strong>WSP</strong></p>
+<p>​		当前的栈指针（32bit）</p>
+<p><strong>SP</strong></p>
+<p>​		当前的栈指针（64bit）</p>
+<p><strong>WZR</strong></p>
+<p>​		零寄存器（32bit）</p>
+<p><strong>XZR</strong></p>
+<p>​		零寄存器（64bit）</p>
+<p>在指令语法中，只能使用这些名字中的一个来引用它。</p>
+<p>您不能通过名称或数字显式地引用程序计数器(PC)。</p>
+<h5 id="ADC"><a href="#ADC" class="headerlink" title="ADC"></a>ADC</h5><p>带进位的加法。</p>
+<h6 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ADC	Wd,Wn,Wm	;32 bit</span><br><span class="line">ADC	Xd,Xb,Xm	;64 bit</span><br></pre></td></tr></table></figure>
+
+<h6 id="注解："><a href="#注解：" class="headerlink" title="注解："></a>注解：</h6><p><strong>Wd</strong></p>
+<p>​		32位目标通用寄存器</p>
+<p><strong>Wn</strong></p>
+<p>​		32位第一个源通用寄存器</p>
+<p><strong>Wm</strong></p>
+<p>​		32位第二个源通用寄存器</p>
+<p><strong>Xd</strong></p>
+<p>​		64位目标通用寄存器</p>
+<p><strong>Xn</strong></p>
+<p>​		64位第一个源通用寄存器</p>
+<p><strong>Xm</strong></p>
+<p>​		64位第二个源通用寄存器</p>
+<h6 id="运算"><a href="#运算" class="headerlink" title="运算"></a>运算</h6><p>带进位的加法，将两个寄存器的值和C标志位的值相加，并将结果写入目标寄存器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn + Rm + C	（R代表 W 或者 X）。	</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="ADCS"><a href="#ADCS" class="headerlink" title="ADCS"></a>ADCS</h5><p>带进位加法，且影响标志位。</p>
+<h6 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ADCS	Wd,Wn,Wm	;32 位</span><br><span class="line"></span><br><span class="line">ADCS	Xd,Xn,Xm	;64位</span><br></pre></td></tr></table></figure>
+
+<h6 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h6><p><strong>Wd</strong></p>
+<p>32位目标通用寄存器</p>
+<p><strong>Wn</strong></p>
+<p>32位第一个源通用寄存器</p>
+<p><strong>Wm</strong></p>
+<p>32位第二个源通用寄存器</p>
+<p><strong>Xd</strong></p>
+<p>64位目标通用寄存器</p>
+<p><strong>Xn</strong></p>
+<p>64位第一个源通用寄存器</p>
+<p><strong>Xm</strong></p>
+<p>64位第二个源通用寄存器</p>
+<h6 id="运算-1"><a href="#运算-1" class="headerlink" title="运算"></a>运算</h6><p>带标志位加法运算，并且结果影响标志位。将两个源寄存器的值和C标志位的值相加，并将结果写入目标寄存器。结果会更新（如果发生进位）条件标志位。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn + Rm + C （R代表 W 或 X）。</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="ADD（带寄存器扩展运算）"><a href="#ADD（带寄存器扩展运算）" class="headerlink" title="ADD（带寄存器扩展运算）"></a>ADD（带寄存器扩展运算）</h5><p>带有寄存器扩展操作的加法运算。</p>
+<h6 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ADD	Wd|WSP,	Wn|WSP,	Wm&#123;,	extend&#123;#amount&#125;&#125;	;32位</span><br><span class="line"></span><br><span class="line">ADD	Xd|SP，	Xn|SP，	Rm&#123;,	extend&#123;amount&#125;&#125;	;64位</span><br></pre></td></tr></table></figure>
+
+
+
+<h6 id="注解"><a href="#注解" class="headerlink" title="注解"></a>注解</h6><p><strong>Wd|WSP</strong></p>
+<p>32位目标寄存器或者栈指针</p>
+<p><strong>Wn|WSP</strong></p>
+<p>32位第一个源通用寄存器或者栈指针</p>
+<p><strong>Wm</strong></p>
+<p>32位第二个源通用寄存器</p>
+<p><strong>extend</strong></p>
+<p>应用在第二个源操作数（寄存器）的扩展：</p>
+<ul>
+<li>32位通用寄存器</li>
+</ul>
+<p>可以是UXTB、UXTH、LSL|UXTW、UXTX、SXTB、SXTH、SXTW、SXTX中的一个。</p>
+<p>如果Rd或者Rn是WSP，那么LSL比UXTW更好，并且在<code>amount</code>为0时可以忽略。在所有其他情况下，扩展是必须的，并且必须是UXTW而不是LSL。</p>
+<ul>
+<li>64位通用寄存器</li>
+</ul>
+<p>可以是UXTB、UXTH、UXTW、LSL|UXTX、SXTB、SXTH、SXTW、SXTX中的一个。</p>
+<p>如果Rd或Rn是SP，那么LSL比UXTX更好，并且在数量为0时可以省略。在所有其他情况下，扩展是必需的，并且必须是UXTX而不是LSL。</p>
+<p><strong>Xd|SP</strong></p>
+<p>64位目标通用寄存器或者栈指针</p>
+<p><strong>Xn|SP</strong></p>
+<p>64位第一个源通用寄存器或者栈指针</p>
+<p><strong>R</strong></p>
+<p>宽度指示符，可以是 W 或者 X 。</p>
+<p><strong>m</strong></p>
+<p>是第二个源通用寄存器的编号【0-30】，或者ZR（31）</p>
+<p><strong>amount</strong></p>
+<p>在0到4的范围内扩展后要应用的左移量，默认为0，当<code>extend</code>不存在时，<code>amount</code>也是不存在的，当<code>extend</code>是LSL时，它是必需的；当<code>extend</code>存在但又不是LSL时，它是可选的。</p>
+<h6 id="运算-2"><a href="#运算-2" class="headerlink" title="运算"></a>运算</h6><p>带扩展寄存器的加法运算，将一个通用寄存器中的值和另一个带有符号扩展运算或者无符号扩展运算的通用寄存器的值相加，然后把结果写入到目标寄存器。从Rm寄存器扩展的参数可以是字节、半字、字或者双字。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn = LSL（extend（Rm），amount）（R代表 W 或者 X）	</span><br></pre></td></tr></table></figure>
+
+
+
+<h6 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h6><p><code>ADD</code>指令（64位寄存器）组合说明符</p>
+<table>
+<thead>
+<tr>
+<th align="left">R</th>
+<th align="left">extend</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">W</td>
+<td align="left">SXTB</td>
+</tr>
+<tr>
+<td align="left">W</td>
+<td align="left">SXTH</td>
+</tr>
+<tr>
+<td align="left">W</td>
+<td align="left">SXTW</td>
+</tr>
+<tr>
+<td align="left">W</td>
+<td align="left">UXTB</td>
+</tr>
+<tr>
+<td align="left">W</td>
+<td align="left">UXTH</td>
+</tr>
+<tr>
+<td align="left">W</td>
+<td align="left">UXTW</td>
+</tr>
+<tr>
+<td align="left">X</td>
+<td align="left">LSL|UXTX</td>
+</tr>
+<tr>
+<td align="left">X</td>
+<td align="left">SXTX</td>
+</tr>
+</tbody></table>
+<h5 id="ADD（立即数）"><a href="#ADD（立即数）" class="headerlink" title="ADD（立即数）"></a>ADD（立即数）</h5><p>这个指令通常被用作MOV指令（从SP或者到SP）。</p>
+<h6 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ADD	Wd|WSP,	Wn|WSP,	#imm&#123;,	shift&#125;	;32位</span><br><span class="line">ADD	Xd|SP,	Xn|Sp,	#imm&#123;,	shift&#125;	;64位</span><br></pre></td></tr></table></figure>
+
+
+
+<p>注释：</p>
+<p><strong>Wd|WSP</strong></p>
+<p>32位目标通用寄存器或者栈指针。</p>
+<p><strong>Wn|WSP</strong></p>
+<p>32位源通用寄存器或者栈指针。</p>
+<p><strong>Xd|SP</strong></p>
+<p>64位目标通用寄存器或栈指针。</p>
+<p><strong>imm</strong></p>
+<p>无符号立即数，范围：【0，4095】。</p>
+<p><strong>shift</strong></p>
+<p>被应用到立即数上的左移操作，默认是<code>LSL	#0</code>，可以是<code>LSL	#0</code>	或者<code>LSL	#12</code>。</p>
+<h6 id="运算-3"><a href="#运算-3" class="headerlink" title="运算"></a>运算</h6><p>将一个寄存器上的值和可选移位的立即数的值相加，再把结果写入到目标寄存器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn + shift( imm )（R代表 W 或者 X ）</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="ADD（带寄存器移位操作）"><a href="#ADD（带寄存器移位操作）" class="headerlink" title="ADD（带寄存器移位操作）"></a>ADD（带寄存器移位操作）</h5><h6 id="语法-4"><a href="#语法-4" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ADD	Wd,	Wn,	Wm&#123;,	shitf	#amount&#125;	;32位</span><br><span class="line">ADD	Xd,	Xn,	Xm&#123;,	shift	#amount&#125;	;64位</span><br></pre></td></tr></table></figure>
+
+<h6 id="注释-1"><a href="#注释-1" class="headerlink" title="注释"></a>注释</h6><p><strong>Wd</strong></p>
+<p>32位目标通用寄存器</p>
+<p><strong>Wn</strong></p>
+<p>32位第一个源通用寄存器</p>
+<p><strong>Wm</strong></p>
+<p>32位第二个源通用寄存器</p>
+<p><strong>amount</strong></p>
+<p>取决于指令：</p>
+<ul>
+<li>32位通用寄存器</li>
+</ul>
+<p>移位数，范围：【0，31】，默认是0。</p>
+<ul>
+<li>64位通用寄存器</li>
+</ul>
+<p>移位数，范围：【0，63】，默认是0。</p>
+<p><strong>Xd</strong></p>
+<p>64位目标通用寄存器</p>
+<p><strong>Xn</strong></p>
+<p>64位第一个源通用寄存器</p>
+<p><strong>Xm</strong></p>
+<p>64位第二个源通用寄存器</p>
+<p><strong>shift</strong></p>
+<p>第二个操作数的移位操作类型，默认是LSL，可以是LSL、LSR、ASR中的一个。</p>
+<h6 id="运算-4"><a href="#运算-4" class="headerlink" title="运算"></a>运算</h6><p>将一个寄存器的值和另一个可选移位操作的寄存器的值相加，并将结果存入目标寄存器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd	=	Rn	+	shift(Rm,	amount)（R代表	W	或者	X）</span><br></pre></td></tr></table></figure>
+
+<h5 id="ADDG"><a href="#ADDG" class="headerlink" title="ADDG"></a>ADDG</h5><p>带标记的加法指令。</p>
+<h6 id="语法-5"><a href="#语法-5" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ADDG	Xd|SP	Xn|SP,	#&lt;uimm6&gt;,	#uimm4</span><br></pre></td></tr></table></figure>
+
+<h6 id="注释-2"><a href="#注释-2" class="headerlink" title="注释"></a>注释</h6><p><strong>Xd|SP</strong></p>
+<p>64位目标通用寄存器或者栈指针。</p>
+<p><strong>Xn|SP</strong></p>
+<p>64位源通用寄存器或者栈指针。</p>
+<p><strong>&lt;uimm6&gt;</strong></p>
+<p>无符号立即数，0~1008之间的16的倍数。</p>
+<p><strong>&lt;uimm4&gt;</strong></p>
+<p>无符号立即数，0~15之间。</p>
+<h6 id="架构支持"><a href="#架构支持" class="headerlink" title="架构支持"></a>架构支持</h6><p>支持Armv8.5及更高版本。</p>
+<h6 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h6><p>向源寄存器中的地址添加由标记颗粒缩放的即时值，使用即时值修改地址的逻辑地址标记，并将结果写入目标寄存器。在GCR_EL1中指定的标记。当修改逻辑地址标记时，从可能的输出中排除Exclude。</p>
+<h5 id="ADDS（带寄存器扩展）"><a href="#ADDS（带寄存器扩展）" class="headerlink" title="ADDS（带寄存器扩展）"></a>ADDS（带寄存器扩展）</h5><p>带扩展寄存器的加法指令，影响标志位。</p>
+<p>这个指令通常被用作CMN（带扩展寄存器）。</p>
+<h6 id="语法-6"><a href="#语法-6" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ADDS	Wd,	Wn|WSP	Wm&#123;,	extend&#123;#amount&#125;&#125;	;32位</span><br><span class="line">ADDS	Xd,	Xn|SP,	Rm&#123;,	extend&#123;#amount&#125;&#125;	;64位</span><br></pre></td></tr></table></figure>
+
+<h6 id="注释-3"><a href="#注释-3" class="headerlink" title="注释"></a>注释</h6><p><strong>Wd</strong></p>
+<p>32位目标通用寄存器。</p>
+<p><strong>Wn|WSP</strong></p>
+<p>32位第一个源通用寄存器或者栈指针。</p>
+<p><strong>Wm</strong></p>
+<p>第二个源通用寄存器。</p>
+<p><strong>extend</strong></p>
+<p>应用于第二个源操作数的扩展：</p>
+<ul>
+<li>32位通用寄存器</li>
+</ul>
+<p>可以是UXTB, UXTH, LSL|UXTW, UXTX, SXTB, SXTH, SXTW或SXTX。</p>
+<p>如果Rn是WSP，那么LSL是首选而不是UXTW，并且当<code>amount</code>为0时可以省略。在所有其他情况下，<code>extend</code>是必需的，并且必须是UXTW而不是LSL。</p>
+<ul>
+<li>64位通用寄存器</li>
+</ul>
+<p>可以是UXTB, UXTH, UXTW, LSL|UXTX, SXTB, SXTH, SXTW或SXTX。</p>
+<p>如果Rn是SP，那么LSL比UXTX更好，并且当<code>amount</code>为0时可以省略。在所有其他情况下，<code>extend</code>是必需的，并且必须是UXTX而不是LSL。</p>
+<p><strong>Xd</strong></p>
+<p>64位目标通用寄存器。</p>
+<p><strong>Xn|SP</strong></p>
+<p>64位第一个源通用寄存器或者栈指针。</p>
+<p><strong>R</strong></p>
+<p>宽度指示符，可以是W或X。</p>
+<p><strong>m</strong></p>
+<p>是第二个通用源寄存器的编号[0-30]或名称ZR(31)。</p>
+<p><strong>amount</strong></p>
+<p>在0到4的范围内扩展后要应用的左移量，默认为0。当<code>extend</code>不在时，它必须是空的;当<code>extend</code>是LSL时，它是必需的；当<code>extend</code>不是LSL时，它是可选的。</p>
+<h6 id="运算-5"><a href="#运算-5" class="headerlink" title="运算"></a>运算</h6><p>加法指令(带扩展寄存器)，设置标志，一个寄存器的值和一个符号或零扩展寄存器的值相加，后面跟着一个可选的左移位量，将结果写入目标寄存器。从Rm寄存器扩展的参数可以是字节、半字、字或双字。它根据结果更新条件标志。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn + LSL(extend(Rm), amount)	;R代表W 或者 X</span><br></pre></td></tr></table></figure>
+
+<h6 id="ADDS指令（64位通用寄存器）说明符组合"><a href="#ADDS指令（64位通用寄存器）说明符组合" class="headerlink" title="ADDS指令（64位通用寄存器）说明符组合"></a>ADDS指令（64位通用寄存器）说明符组合</h6><table>
+<thead>
+<tr>
+<th>R</th>
+<th>Extend</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>W</td>
+<td>SXTB</td>
+</tr>
+<tr>
+<td>W</td>
+<td>SXTH</td>
+</tr>
+<tr>
+<td>W</td>
+<td>SXTW</td>
+</tr>
+<tr>
+<td>W</td>
+<td>UXTB</td>
+</tr>
+<tr>
+<td>W</td>
+<td>UXTH</td>
+</tr>
+<tr>
+<td>W</td>
+<td>UXTW</td>
+</tr>
+<tr>
+<td>X</td>
+<td>LSL|UXTX</td>
+</tr>
+<tr>
+<td>X</td>
+<td>SXTX</td>
+</tr>
+</tbody></table>
+<h5 id="ADDS（立即数）"><a href="#ADDS（立即数）" class="headerlink" title="ADDS（立即数）"></a>ADDS（立即数）</h5><p>加法指令（立即数），设置标志位。</p>
+<p>这个指令通常被用作<code>CMN(立即数)</code></p>
+<h6 id="语法-7"><a href="#语法-7" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ADDS	Wd,	Wn|WSP,	#imm&#123;,	shift&#125;	;32位</span><br><span class="line">ADDS	Xd,	Xd|SP,	#imm&#123;,	shift&#125;	;64位</span><br></pre></td></tr></table></figure>
+
+<h6 id="注释-4"><a href="#注释-4" class="headerlink" title="注释"></a>注释</h6><p><strong>Wd</strong></p>
+<p>32位目标通用寄存器。</p>
+<p><strong>Wn|WSP</strong></p>
+<p>32位源通用寄存器或者栈指针。</p>
+<p><strong>Xd</strong></p>
+<p>64位目标通用寄存器。</p>
+<p><strong>Xn|SP</strong></p>
+<p>64位源通用寄存器或者栈指针。</p>
+<p><strong>imm</strong></p>
+<p>无符号立即数，范围：0~4095。</p>
+<p><strong>shift</strong></p>
+<p>附加在立即数上的左移操作，默认是<code>LSL #0</code>，可以是<code>LSL	#0</code>或者<code>LSL	#12</code>。</p>
+<h6 id="运算-6"><a href="#运算-6" class="headerlink" title="运算"></a>运算</h6><p>加法指令（立即数），设置标志位，将一个寄存器的值和一个带左移操作的立即数的值相加，结果写入目标寄存器。并基于结果更新条件标志位。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn + shift(imm)	;R代表	W	或者	X。</span><br></pre></td></tr></table></figure>
+
+<h5 id="ADDS（移位寄存器）"><a href="#ADDS（移位寄存器）" class="headerlink" title="ADDS（移位寄存器）"></a>ADDS（移位寄存器）</h5><p>ADD指令（带寄存器移位），设置标志位。</p>
+<p>这个指令通常被用作<code>CMN(寄存器移位)</code>。</p>
+<h6 id="语法-8"><a href="#语法-8" class="headerlink" title="语法"></a>语法</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ADDS	Wd,	Wn,	Wm&#123;,	shift	#amount&#125;	;32位</span><br><span class="line"></span><br><span class="line">ADDS	Xd,	Xn,	Xm&#123;,	shift	#amount&#125;	;64位</span><br></pre></td></tr></table></figure>
+
+<h6 id="注释-5"><a href="#注释-5" class="headerlink" title="注释"></a>注释</h6><p><strong>Wd</strong></p>
+<p>32位目标通用寄存器。</p>
+<p><strong>Wn</strong></p>
+<p>32位第一个源通用寄存器。</p>
+<p><strong>Wm</strong></p>
+<p>32位第二个源通用寄存器。</p>
+<p><strong>amount</strong></p>
+<p>取决于指令变量：</p>
+<ul>
+<li>32位通用寄存器</li>
+</ul>
+<p>移位量，在0~31之间，默认是0。</p>
+<ul>
+<li>64位通用寄存器</li>
+</ul>
+<p>移位量，在0~63之间，默认是0。</p>
+<p><strong>Xd</strong></p>
+<p>64位目标通用寄存器。</p>
+<p><strong>Xn</strong></p>
+<p>64位第一个源通用寄存器。</p>
+<p><strong>Xm</strong></p>
+<p>64位第二个源通用寄存器。</p>
+<p><strong>shift</strong></p>
+<p>是要应用于第二个源操作数的可选移位类型，默认是LSL，可以是LSL、LSR或者ASR。</p>
+<h6 id="运算-7"><a href="#运算-7" class="headerlink" title="运算"></a>运算</h6><p>Add指令（寄存器移位），设置标志位，将一个寄存器的值，和另一个可选移位操作的寄存器的值相加，然后将结果写入到目标寄存器中。且在结果的基础上更新标志位。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Rd = Rn + shift(Rm, amount)	;R代表	W	或者	X	。</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ARM/" rel="tag"><i class="fa fa-tag"></i> ARM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/12/15/Overview-of-AArch64-state-translation-2/" rel="next" title="ARM文档翻译（二）----条件代码篇">
+                <i class="fa fa-chevron-left"></i> ARM文档翻译（二）----条件代码篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/01/01/Overview-of-AArch64-state-translation-4/" rel="prev" title="ARM文档翻译（四）----指令篇（二）">
+                ARM文档翻译（四）----指令篇（二） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#A64%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4"><span class="nav-number">1.</span> <span class="nav-text">A64常用指令</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#A64%E6%8C%87%E4%BB%A4%E7%9A%84%E5%AF%84%E5%AD%98%E5%99%A8%E9%99%90%E5%88%B6"><span class="nav-number">1.1.</span> <span class="nav-text">A64指令的寄存器限制</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADC"><span class="nav-number">1.2.</span> <span class="nav-text">ADC</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95"><span class="nav-number">1.2.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E8%A7%A3%EF%BC%9A"><span class="nav-number">1.2.2.</span> <span class="nav-text">注解：</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97"><span class="nav-number">1.2.3.</span> <span class="nav-text">运算</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADCS"><span class="nav-number">1.3.</span> <span class="nav-text">ADCS</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-1"><span class="nav-number">1.3.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A"><span class="nav-number">1.3.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-1"><span class="nav-number">1.3.3.</span> <span class="nav-text">运算</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADD%EF%BC%88%E5%B8%A6%E5%AF%84%E5%AD%98%E5%99%A8%E6%89%A9%E5%B1%95%E8%BF%90%E7%AE%97%EF%BC%89"><span class="nav-number">1.4.</span> <span class="nav-text">ADD（带寄存器扩展运算）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-2"><span class="nav-number">1.4.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E8%A7%A3"><span class="nav-number">1.4.2.</span> <span class="nav-text">注解</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-2"><span class="nav-number">1.4.3.</span> <span class="nav-text">运算</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%94%A8%E6%B3%95"><span class="nav-number">1.4.4.</span> <span class="nav-text">用法</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADD%EF%BC%88%E7%AB%8B%E5%8D%B3%E6%95%B0%EF%BC%89"><span class="nav-number">1.5.</span> <span class="nav-text">ADD（立即数）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-3"><span class="nav-number">1.5.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-3"><span class="nav-number">1.5.2.</span> <span class="nav-text">运算</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADD%EF%BC%88%E5%B8%A6%E5%AF%84%E5%AD%98%E5%99%A8%E7%A7%BB%E4%BD%8D%E6%93%8D%E4%BD%9C%EF%BC%89"><span class="nav-number">1.6.</span> <span class="nav-text">ADD（带寄存器移位操作）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-4"><span class="nav-number">1.6.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A-1"><span class="nav-number">1.6.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-4"><span class="nav-number">1.6.3.</span> <span class="nav-text">运算</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADDG"><span class="nav-number">1.7.</span> <span class="nav-text">ADDG</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-5"><span class="nav-number">1.7.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A-2"><span class="nav-number">1.7.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81"><span class="nav-number">1.7.3.</span> <span class="nav-text">架构支持</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">1.7.4.</span> <span class="nav-text">使用</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADDS%EF%BC%88%E5%B8%A6%E5%AF%84%E5%AD%98%E5%99%A8%E6%89%A9%E5%B1%95%EF%BC%89"><span class="nav-number">1.8.</span> <span class="nav-text">ADDS（带寄存器扩展）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-6"><span class="nav-number">1.8.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A-3"><span class="nav-number">1.8.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-5"><span class="nav-number">1.8.3.</span> <span class="nav-text">运算</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#ADDS%E6%8C%87%E4%BB%A4%EF%BC%8864%E4%BD%8D%E9%80%9A%E7%94%A8%E5%AF%84%E5%AD%98%E5%99%A8%EF%BC%89%E8%AF%B4%E6%98%8E%E7%AC%A6%E7%BB%84%E5%90%88"><span class="nav-number">1.8.4.</span> <span class="nav-text">ADDS指令（64位通用寄存器）说明符组合</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADDS%EF%BC%88%E7%AB%8B%E5%8D%B3%E6%95%B0%EF%BC%89"><span class="nav-number">1.9.</span> <span class="nav-text">ADDS（立即数）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-7"><span class="nav-number">1.9.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A-4"><span class="nav-number">1.9.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-6"><span class="nav-number">1.9.3.</span> <span class="nav-text">运算</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADDS%EF%BC%88%E7%A7%BB%E4%BD%8D%E5%AF%84%E5%AD%98%E5%99%A8%EF%BC%89"><span class="nav-number">1.10.</span> <span class="nav-text">ADDS（移位寄存器）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-8"><span class="nav-number">1.10.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A-5"><span class="nav-number">1.10.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%BF%90%E7%AE%97-7"><span class="nav-number">1.10.3.</span> <span class="nav-text">运算</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="对于OC的实例方法，用法是先实例化对象，再用实例对象调用方法： 12345678910111213141516171819202122&#x2F;&#x2F; ObjectA.h@interface ObjectA : NSObject@property(nonatomic,assign,readonly)BOOL b;- (void)funcA;- (void)funcB:(NSString *)str;@end&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="类的布局——方法列表（1）">
+<meta property="og:url" content="https://www.sweetloser.com/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="对于OC的实例方法，用法是先实例化对象，再用实例对象调用方法： 12345678910111213141516171819202122&#x2F;&#x2F; ObjectA.h@interface ObjectA : NSObject@property(nonatomic,assign,readonly)BOOL b;- (void)funcA;- (void)funcB:(NSString *)str;@end&#x2F;">
+<meta property="og:locale">
+<meta property="og:image" content="https://www.sweetloser.com/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/1.png">
+<meta property="article:published_time" content="2023-10-12T05:50:06.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.639Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.sweetloser.com/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2023/10/12/类的布局_方法列表1/"/>
+
+
+
+
+
+  <title>类的布局——方法列表（1） | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">类的布局——方法列表（1）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-10-12T13:50:06+08:00">
+                2023-10-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  1.7k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  8 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>对于OC的实例方法，用法是先实例化对象，再用实例对象调用方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">// ObjectA.h</span><br><span class="line">@interface ObjectA : NSObject</span><br><span class="line">@property(nonatomic,assign,readonly)BOOL b;</span><br><span class="line">- (void)funcA;</span><br><span class="line">- (void)funcB:(NSString *)str;</span><br><span class="line">@end</span><br><span class="line"></span><br><span class="line">// ObjectA.m</span><br><span class="line">#import &quot;ObjectA.h&quot;</span><br><span class="line">@implementation ObjectA</span><br><span class="line">- (void)funcA &#123;</span><br><span class="line">    NSLog(@&quot;方法A&quot;);</span><br><span class="line">&#125;</span><br><span class="line">- (void)funcB:(NSString *)str &#123;</span><br><span class="line">    NSLog(@&quot;方法B：%@&quot;, str);</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br><span class="line">  </span><br><span class="line">  // 调用实例方法</span><br><span class="line">  ObjectA *aObj = [[ObjectA alloc] init];</span><br><span class="line">  [aObj funcA];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>和成员变量的使用方式一样，都是先初始化对象，再使用。这就容易让人产生一个误区：实例方法和成员变量一样，每个对象独一份，在对象初始化时存储在堆区。</p>
+<p>事实上，实例方法和成员变量有着本质的区别，成员变量是在对象实例化之后，存储在内存的堆区（即对象所在的地址）；而实例方法作为可执行部分，编译之后存储在代码段，实例方法的地址（IMP）、方法名等信息则被存储在类对象中。</p>
+<p>类对象的定义：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> class_rw_ext_t &#123;</span><br><span class="line">    DECLARE_AUTHED_PTR_TEMPLATE(class_ro_t)</span><br><span class="line">    class_ro_t_authed_ptr&lt;<span class="keyword">const</span> class_ro_t&gt; ro;</span><br><span class="line">    method_array_t methods;</span><br><span class="line">    property_array_t properties;</span><br><span class="line">    protocol_array_t protocols;</span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *demangledName;</span><br><span class="line">    uint32_t version;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> class_rw_t &#123;</span><br><span class="line">    <span class="comment">// Be warned that Symbolication knows the layout of this structure.</span></span><br><span class="line">    uint32_t flags;</span><br><span class="line">    uint16_t witness;</span><br><span class="line">    explicit_atomic&lt;uintptr_t&gt; ro_or_rw_ext;</span><br><span class="line">  </span><br><span class="line">  private:</span><br><span class="line">    using ro_or_rw_ext_t = objc::PointerUnion&lt;<span class="keyword">const</span> class_ro_t, class_rw_ext_t, PTRAUTH_STR(<span class="string">&quot;class_ro_t&quot;</span>), PTRAUTH_STR(<span class="string">&quot;class_rw_ext_t&quot;</span>)&gt;;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">struct</span> class_data_bits_t &#123;</span><br><span class="line">    <span class="comment">// Values are the FAST_ flags above.</span></span><br><span class="line">    uintptr_t bits;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> objc_class : objc_object &#123;</span><br><span class="line">    <span class="comment">// Class ISA;			// 继承自 struct objc_object</span></span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             <span class="comment">// formerly cache pointer and vtable</span></span><br><span class="line">    class_data_bits_t bits;</span><br><span class="line">	  class_rw_t *data() <span class="keyword">const</span> &#123;</span><br><span class="line">  	     <span class="keyword">return</span> bits.data();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>用一个图大概描述一下其内存布局：</p>
+<img src="/2023/10/12/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A81/1.png" style="zoom:50%;">
+
+
+
+<p>用lldb大致验证一下：</p>
+<blockquote>
+<p>初始化对象：</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ObjectA *aObj = [[ObjectA alloc] init];</span><br><span class="line"> NSLog(@&quot;=====分割线=====&quot;);		// 此处下断点</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取对象地址：</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(lldb) po aObj</span><br><span class="line">&lt;ObjectA: 0x282dccdd0&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取isa指针：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">1</span>gx <span class="number">0x282dccdd0</span></span><br><span class="line"><span class="number">0x282dccdd0</span>: <span class="number">0x01000001001f14a9</span>			<span class="comment">// 0x01000001001f14a9 为优化后的isa指针，要获取真实的isa指针，需进一步处理</span></span><br><span class="line">(lldb) p/x <span class="number">0x01000001001f14a9</span> &amp; <span class="number">0x0000000ffffffff8</span>ULL</span><br><span class="line">(<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span>) $<span class="number">1</span> = <span class="number">0x00000001001f14a8</span>		<span class="comment">// 0x00000001001f14a8 为真实的isa指针</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取bits：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">5</span>gx <span class="number">0x00000001001f14a8</span></span><br><span class="line"><span class="number">0x1001f14a8</span>: <span class="number">0x00000001001f1480</span> <span class="number">0x000000020afa07d8</span></span><br><span class="line"><span class="number">0x1001f14b8</span>: <span class="number">0x0003000283a88440</span> <span class="number">0x8018000100000000</span></span><br><span class="line"><span class="number">0x1001f14c8</span>: <span class="number">0x8000000282fea4e4</span>					<span class="comment">// 0x8000000282fea4e4 即为bits的值</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>从bits值中获取class_rw_t结构体：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(lldb) p/x <span class="number">0x8000000282fea4e4</span> &amp; <span class="number">0x0f00007ffffffff8</span>UL</span><br><span class="line">(<span class="type">unsigned</span> <span class="type">long</span>) $<span class="number">2</span> = <span class="number">0x0000000282fea4e0</span>			<span class="comment">// struct class_rw_t指针</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取class_ro_t结构体：</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">2</span>gx <span class="number">0x0000000282fea4e0</span></span><br><span class="line"><span class="number">0x282fea4e0</span>: <span class="number">0x0000000080080006</span> <span class="number">0x00000001001f02c8</span>		<span class="comment">// 0x00000001001f02c8 为ro_or_rw_ext联合指针</span></span><br><span class="line">(lldb) p/x <span class="number">0x00000001001f02c8</span> &amp; <span class="number">0x1</span></span><br><span class="line">(<span class="type">long</span>) $<span class="number">3</span> = <span class="number">0x0000000000000000</span>							<span class="comment">// ro_or_rw_ext &amp; 0x1 == 0 ,则 ro_or_rw_ex 的值即为class_ro_t指针</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>获取baseMethods</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">5</span>gx <span class="number">0x00000001001f02c8</span></span><br><span class="line"><span class="number">0x1001f02c8</span>: <span class="number">0x0000000800000080</span> <span class="number">0x0000000000000009</span></span><br><span class="line"><span class="number">0x1001f02d8</span>: <span class="number">0x0000000000000000</span> <span class="number">0x00000001001ef3d3</span></span><br><span class="line"><span class="number">0x1001f02e8</span>: <span class="number">0x00000001001f0238</span>						<span class="comment">// 该指针即为baseMethods</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>查看baseMethods的内容：</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// baseMethods为struct method_list_t指针。</span></span><br><span class="line"><span class="comment">// struct method_list_t 结构如下：</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Element, <span class="keyword">typename</span> List, <span class="type">uint32_t</span> FlagMask, <span class="keyword">typename</span> PointerModifier = PointerModifierNop&gt;</span><br><span class="line"><span class="keyword">struct</span> entsize_list_tt &#123;</span><br><span class="line">    <span class="type">uint32_t</span> entsizeAndFlags;</span><br><span class="line">    <span class="type">uint32_t</span> count;</span><br><span class="line">  <span class="function"><span class="type">uint32_t</span> <span class="title">entsize</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> entsizeAndFlags &amp; ~FlagMask;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="type">uint32_t</span> <span class="title">flags</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> entsizeAndFlags &amp; FlagMask;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">ALWAYS_INLINE</span></span><br><span class="line"><span class="function">    Element&amp; <span class="title">getOrEnd</span><span class="params">(<span class="type">uint32_t</span> i)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="built_in">ASSERT</span>(i &lt;= count);</span><br><span class="line">        <span class="type">uint32_t</span> iBytes;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">os_mul_overflow</span>(i, <span class="built_in">entsize</span>(), &amp;iBytes))</span><br><span class="line">            _objc_fatal(<span class="string">&quot;entsize_list_tt overflow: index %&quot;</span> PRIu32 <span class="string">&quot; in list %p with entsize %&quot;</span> PRIu32,</span><br><span class="line">                        i, <span class="keyword">this</span>, <span class="built_in">entsize</span>());</span><br><span class="line">        <span class="keyword">return</span> *PointerModifier::<span class="built_in">modify</span>(*(List *)<span class="keyword">this</span>, (Element *)((<span class="type">uint8_t</span> *)<span class="keyword">this</span> + <span class="built_in">sizeof</span>(*<span class="keyword">this</span>) + iBytes));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">Element&amp; <span class="title">get</span><span class="params">(<span class="type">uint32_t</span> i)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="built_in">ASSERT</span>(i &lt; count);</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">getOrEnd</span>(i);</span><br><span class="line">    &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">method_list_t</span> : entsize_list_tt&lt;<span class="type">method_t</span>, <span class="type">method_list_t</span>, <span class="number">0xffff0003</span>, <span class="type">method_t</span>::pointer_modifier&gt; &#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>乍一看，似乎这里并没有存储任何和方法列表相关的信息，但是细看结构体模版<code>entsize_list_tt</code>的<code>getOrEnd</code>实现就会发现，该模版在结构体内部维护了一个<code>Element</code>类型的数组，其实际结构可以理解为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">entsize_list_tt</span> &#123;</span><br><span class="line">    <span class="type">uint32_t</span> entsizeAndFlags;</span><br><span class="line">    <span class="type">uint32_t</span> count;</span><br><span class="line">    Element elements[<span class="number">0</span>];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>从上面可以看出，该模版作为<code>method_list_t</code>的实现，Element的类型为：<code>method_t</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">method_t</span> &#123;</span><br><span class="line">	SEL name;</span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *types;</span><br><span class="line">  MethodListIMP imp;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>到这里，baseMethods的内容便呼之欲出了：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">(lldb) x/<span class="number">15</span>gx <span class="number">0x00000001001f0238</span>			<span class="comment">// 以指针的形式读取15条baseMethods的内容</span></span><br><span class="line"><span class="number">0x1001f0238</span>: <span class="number">0x000000030000001b</span> <span class="number">0x00000001001ef035</span>		<span class="comment">//0x000000030000001b 为 entsizeAndFlags 和 count 的值</span></span><br><span class="line"><span class="number">0x1001f0248</span>: <span class="number">0x00000001001ef444</span> <span class="number">0x00000001001edd24</span></span><br><span class="line"><span class="number">0x1001f0258</span>: <span class="number">0x00000001001ef03b</span> <span class="number">0x00000001001ef44c</span></span><br><span class="line"><span class="number">0x1001f0268</span>: <span class="number">0x00000001001edd50</span> <span class="number">0x00000001b04f22e9</span></span><br><span class="line"><span class="number">0x1001f0278</span>: <span class="number">0x00000001001ef457</span> <span class="number">0x00000001001eddb4</span></span><br><span class="line"><span class="number">0x1001f0288</span>: <span class="number">0x0000000100000020</span> <span class="number">0x00000001001f1420</span></span><br><span class="line"><span class="number">0x1001f0298</span>: <span class="number">0x00000001001ee619</span> <span class="number">0x00000001001ef45f</span></span><br><span class="line"><span class="number">0x1001f02a8</span>: <span class="number">0x0000000100000000</span></span><br><span class="line">(lldb) p (SEL)<span class="number">0x00000001001ef035</span>			<span class="comment">// 读取第1个method_t的name</span></span><br><span class="line">(SEL) $<span class="number">11</span> = <span class="string">&quot;funcA&quot;</span></span><br><span class="line">(lldb) p (<span class="type">char</span> *)<span class="number">0x00000001001ef444</span>		<span class="comment">// 读取第1个method_t的types</span></span><br><span class="line">(<span class="type">char</span> *) $<span class="number">12</span> = <span class="number">0x00000001001ef444</span> <span class="string">&quot;v16@0:8&quot;</span></span><br><span class="line">(lldb) dis -a <span class="number">0x00000001001edd24</span>			<span class="comment">// 通过反编译指令验证第1个method_t的imp</span></span><br><span class="line">ObjectDemo`-[ObjectA funcA]:</span><br><span class="line">    <span class="number">0x1001edd24</span> &lt;+<span class="number">0</span>&gt;:  sub    sp, sp, #<span class="number">0x20</span></span><br><span class="line">    <span class="number">0x1001edd28</span> &lt;+<span class="number">4</span>&gt;:  stp    x29, x30, [sp, #<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x1001edd2c</span> &lt;+<span class="number">8</span>&gt;:  add    x29, sp, #<span class="number">0x10</span></span><br><span class="line">    <span class="number">0x1001edd30</span> &lt;+<span class="number">12</span>&gt;: str    x0, [sp, #<span class="number">0x8</span>]</span><br><span class="line">    <span class="number">0x1001edd34</span> &lt;+<span class="number">16</span>&gt;: str    x1, [sp]</span><br><span class="line">    <span class="number">0x1001edd38</span> &lt;+<span class="number">20</span>&gt;: adrp   x0, <span class="number">3</span></span><br><span class="line">    <span class="number">0x1001edd3c</span> &lt;+<span class="number">24</span>&gt;: add    x0, x0, #<span class="number">0x90</span>             ; @</span><br><span class="line">    <span class="number">0x1001edd40</span> &lt;+<span class="number">28</span>&gt;: bl     <span class="number">0x1001ee3a8</span>               ; symbol stub <span class="keyword">for</span>: NSLog</span><br><span class="line">    <span class="number">0x1001edd44</span> &lt;+<span class="number">32</span>&gt;: ldp    x29, x30, [sp, #<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x1001edd48</span> &lt;+<span class="number">36</span>&gt;: add    sp, sp, #<span class="number">0x20</span></span><br><span class="line">    <span class="number">0x1001edd4c</span> &lt;+<span class="number">40</span>&gt;: ret   </span><br><span class="line">(lldb) p (SEL)<span class="number">0x00000001001ef03b</span>			<span class="comment">// 读取第2个method_t的name</span></span><br><span class="line">(SEL) $<span class="number">13</span> = <span class="string">&quot;funcB:&quot;</span></span><br><span class="line">(lldb) p (<span class="type">char</span> *)<span class="number">0x00000001001ef44c</span>		<span class="comment">// 读取第2个method_t的types</span></span><br><span class="line">(<span class="type">char</span> *) $<span class="number">14</span> = <span class="number">0x00000001001ef44c</span> <span class="string">&quot;v24@0:8@16&quot;</span></span><br><span class="line">(lldb) dis -a <span class="number">0x00000001001edd50</span>			<span class="comment">// 通过反编译指令验证第2个method_t的imp</span></span><br><span class="line">ObjectDemo`-[ObjectA funcB:]:</span><br><span class="line">    <span class="number">0x1001edd50</span> &lt;+<span class="number">0</span>&gt;:  sub    sp, sp, #<span class="number">0x40</span></span><br><span class="line">    <span class="number">0x1001edd54</span> &lt;+<span class="number">4</span>&gt;:  stp    x29, x30, [sp, #<span class="number">0x30</span>]</span><br><span class="line">    <span class="number">0x1001edd58</span> &lt;+<span class="number">8</span>&gt;:  add    x29, sp, #<span class="number">0x30</span></span><br><span class="line">    <span class="number">0x1001edd5c</span> &lt;+<span class="number">12</span>&gt;: mov    x8, x1</span><br><span class="line">    <span class="number">0x1001edd60</span> &lt;+<span class="number">16</span>&gt;: mov    x1, x2</span><br><span class="line">    <span class="number">0x1001edd64</span> &lt;+<span class="number">20</span>&gt;: stur   x0, [x29, #<span class="number">-0x8</span>]</span><br><span class="line">    <span class="number">0x1001edd68</span> &lt;+<span class="number">24</span>&gt;: stur   x8, [x29, #<span class="number">-0x10</span>]</span><br><span class="line">    <span class="number">0x1001edd6c</span> &lt;+<span class="number">28</span>&gt;: add    x0, sp, #<span class="number">0x18</span></span><br><span class="line">    <span class="number">0x1001edd70</span> &lt;+<span class="number">32</span>&gt;: str    x0, [sp, #<span class="number">0x8</span>]</span><br><span class="line">    <span class="number">0x1001edd74</span> &lt;+<span class="number">36</span>&gt;: mov    x8, #<span class="number">0x0</span></span><br><span class="line">    <span class="number">0x1001edd78</span> &lt;+<span class="number">40</span>&gt;: str    x8, [sp, #<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x1001edd7c</span> &lt;+<span class="number">44</span>&gt;: str    xzr, [sp, #<span class="number">0x18</span>]</span><br><span class="line">    <span class="number">0x1001edd80</span> &lt;+<span class="number">48</span>&gt;: bl     <span class="number">0x1001ee42c</span>               ; symbol stub <span class="keyword">for</span>: objc_storeStrong</span><br><span class="line">    <span class="number">0x1001edd84</span> &lt;+<span class="number">52</span>&gt;: ldr    x8, [sp, #<span class="number">0x18</span>]</span><br><span class="line">    <span class="number">0x1001edd88</span> &lt;+<span class="number">56</span>&gt;: mov    x9, sp</span><br><span class="line">    <span class="number">0x1001edd8c</span> &lt;+<span class="number">60</span>&gt;: str    x8, [x9]</span><br><span class="line">    <span class="number">0x1001edd90</span> &lt;+<span class="number">64</span>&gt;: adrp   x0, <span class="number">3</span></span><br><span class="line">    <span class="number">0x1001edd94</span> &lt;+<span class="number">68</span>&gt;: add    x0, x0, #<span class="number">0xb0</span>             ; @</span><br><span class="line">    <span class="number">0x1001edd98</span> &lt;+<span class="number">72</span>&gt;: bl     <span class="number">0x1001ee3a8</span>               ; symbol stub <span class="keyword">for</span>: NSLog</span><br><span class="line">    <span class="number">0x1001edd9c</span> &lt;+<span class="number">76</span>&gt;: ldr    x0, [sp, #<span class="number">0x8</span>]</span><br><span class="line">    <span class="number">0x1001edda0</span> &lt;+<span class="number">80</span>&gt;: ldr    x1, [sp, #<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x1001edda4</span> &lt;+<span class="number">84</span>&gt;: bl     <span class="number">0x1001ee42c</span>               ; symbol stub <span class="keyword">for</span>: objc_storeStrong</span><br><span class="line">    <span class="number">0x1001edda8</span> &lt;+<span class="number">88</span>&gt;: ldp    x29, x30, [sp, #<span class="number">0x30</span>]</span><br><span class="line">    <span class="number">0x1001eddac</span> &lt;+<span class="number">92</span>&gt;: add    sp, sp, #<span class="number">0x40</span></span><br><span class="line">    <span class="number">0x1001eddb0</span> &lt;+<span class="number">96</span>&gt;: ret    </span><br></pre></td></tr></table></figure>
+
+<p>用lldb将方法列表的存储位置过一遍后，整个过程清晰了很多，接下来再用代码走一遍：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br></pre></td><td class="code"><pre><span class="line">// 定义 ISA_MASK 用于获取isa指针</span><br><span class="line">#if __arm64__</span><br><span class="line">#if TARGET_OS_EXCLAVEKIT</span><br><span class="line">#define ISA_MASK        0xfffffffffffffff8ULL</span><br><span class="line">#elif __has_feature(ptrauth_calls) || TARGET_OS_SIMULATOR</span><br><span class="line">#define ISA_MASK        0x007ffffffffffff8ULL</span><br><span class="line">#else</span><br><span class="line">#define ISA_MASK        0x0000000ffffffff8ULL</span><br><span class="line">#endif</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">// 定义 FAST_DATA_MASK 用于获取class_rw_t</span><br><span class="line">#if TARGET_OS_EXCLAVEKIT</span><br><span class="line">#define FAST_DATA_MASK          0x0000001ffffffff8UL</span><br><span class="line">#elif TARGET_OS_IPHONE &amp;&amp; !TARGET_OS_SIMULATOR</span><br><span class="line">#define FAST_DATA_MASK          0x0f00007ffffffff8UL</span><br><span class="line">#else</span><br><span class="line">#define FAST_DATA_MASK          0x0f007ffffffffff8UL</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">// 定义方法结构体</span><br><span class="line">struct method_t &#123;</span><br><span class="line">    SEL sel;</span><br><span class="line">    char *types;</span><br><span class="line">    IMP imp;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// 定义方法列表结构体</span><br><span class="line">struct method_list_t &#123;</span><br><span class="line">    uint32_t entsizeAndFlags;</span><br><span class="line">    uint32_t count;</span><br><span class="line">    struct method_t elements[0];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// 从实例对象中获取isa指针</span><br><span class="line">BytePtr _isaForObject(NSObject *obj) &#123;</span><br><span class="line">    if (obj == nil) return NULL;</span><br><span class="line">    struct _object &#123;</span><br><span class="line">        BytePtr isa;</span><br><span class="line">    &#125;;</span><br><span class="line">    struct _object *obj_ptr = (struct _object *)(__bridge void *)obj;</span><br><span class="line">    return (BytePtr)((int64_t)obj_ptr-&gt;isa &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 从isa指针中获取方法列表和方法数</span><br><span class="line">void _methodsWithIsa(BytePtr isa, struct method_t **methods, uint32_t *count) &#123;</span><br><span class="line">    // 获取isa中的bits</span><br><span class="line">    uintptr_t bits = *((uintptr_t *)(isa + 8/*isa*/ + 8/*superclass*/ + 16/*cache*/));</span><br><span class="line">    </span><br><span class="line">    // 获取 class_rw_t</span><br><span class="line">    uintptr_t class_rw_t = bits &amp; FAST_DATA_MASK;</span><br><span class="line">    </span><br><span class="line">    // 获取 ro_or_rw_ext</span><br><span class="line">    uintptr_t ro_or_rw_ext = *((uintptr_t *)(class_rw_t + 0x8));</span><br><span class="line">    </span><br><span class="line">    // 获取class_ro_t</span><br><span class="line">    // 判断是class_rw_ext_t 还是 class_ro_t</span><br><span class="line">    uintptr_t class_ro_t = ro_or_rw_ext;</span><br><span class="line">    if (ro_or_rw_ext &amp; 0x1) &#123;</span><br><span class="line">        // class_rw_ext_t</span><br><span class="line">        class_ro_t = *((uintptr_t *)ro_or_rw_ext);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // 获取class_ro_t 中的 baseMethods</span><br><span class="line">    uintptr_t baseMethods = *(uintptr_t *)(class_ro_t + 4/*flags*/ + 4/*instanceStart*/ + 4/*instanceSize*/ + 4/*reserved*/ + 8/*ivarLayout*/ + 8/*name*/);</span><br><span class="line">    </span><br><span class="line">    struct method_list_t *_method_list_t = (struct method_list_t *)baseMethods;</span><br><span class="line">    *count = _method_list_t-&gt;count;</span><br><span class="line">    *methods = _method_list_t-&gt;elements;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// 输出方法信息</span><br><span class="line">void _printMethods(struct method_t *methods, uint32_t count) &#123;</span><br><span class="line">    struct method_t *node = methods;</span><br><span class="line">    for (int i=0; i&lt;count; i++) &#123;</span><br><span class="line">        printf(&quot;=============================\n&quot;);</span><br><span class="line">        printf(&quot;SEL:%s\n&quot;, sel_getName(node-&gt;sel));</span><br><span class="line">        printf(&quot;types:%s\n&quot;,node-&gt;types);</span><br><span class="line">        printf(&quot;imp:0x%lx\n&quot;,(uintptr_t)node-&gt;imp);</span><br><span class="line">        node++;</span><br><span class="line">    &#125;</span><br><span class="line">    printf(&quot;=============================\n&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 调用</span><br><span class="line">	ObjectA *aObj = [[ObjectA alloc] init];</span><br><span class="line"></span><br><span class="line">  BytePtr a_isa = _isaForObject(aObj);   </span><br><span class="line">	struct method_t *method = NULL;</span><br><span class="line">  uint32_t count;</span><br><span class="line">  _methodsWithIsa(a_isa, &amp;method, &amp;count);</span><br><span class="line">  _printMethods(method, count);</span><br><span class="line"></span><br><span class="line">// 输出如下：</span><br><span class="line">=============================</span><br><span class="line">SEL:funcA</span><br><span class="line">types:v16@0:8</span><br><span class="line">imp:0x1021ddce8</span><br><span class="line">=============================</span><br><span class="line">SEL:funcB:</span><br><span class="line">types:v24@0:8@16</span><br><span class="line">imp:0x1021ddd14</span><br><span class="line">=============================</span><br><span class="line">SEL:b</span><br><span class="line">types:B16@0:8</span><br><span class="line">imp:0x1021ddd78</span><br><span class="line">=============================</span><br></pre></td></tr></table></figure>
+
+
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag"><i class="fa fa-tag"></i> iOS</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2023/10/11/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F/" rel="next" title="类的布局——成员变量">
+                <i class="fa fa-chevron-left"></i> 类的布局——成员变量
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2023/10/13/%E7%B1%BB%E7%9A%84%E5%B8%83%E5%B1%80_%E6%96%B9%E6%B3%95%E5%88%97%E8%A1%A82/" rel="prev" title="类的布局——方法列表（2）">
+                类的布局——方法列表（2） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

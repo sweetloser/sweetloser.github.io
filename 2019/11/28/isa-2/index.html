@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS开发," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前一篇介绍过isa的优化方式以及从被优化过的isa中获取真正的struct objc_class指针。然而我们对知识的渴望，并不允许自己仅仅只是知道它、了解它而已，还想进一步分析struct objc_class结构体，以及用它来做点什么。接下来，从isa指针中到底有哪些信息和获取到这些信息可以用来做什么两个方面，来进一步揭开isa的面纱。 isa指针中到底有哪些信息？既然已经可以从一个实例对象中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isa(二)">
+<meta property="og:url" content="https://www.sweetloser.com/2019/11/28/isa-2/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="前一篇介绍过isa的优化方式以及从被优化过的isa中获取真正的struct objc_class指针。然而我们对知识的渴望，并不允许自己仅仅只是知道它、了解它而已，还想进一步分析struct objc_class结构体，以及用它来做点什么。接下来，从isa指针中到底有哪些信息和获取到这些信息可以用来做什么两个方面，来进一步揭开isa的面纱。 isa指针中到底有哪些信息？既然已经可以从一个实例对象中">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-11-28T07:57:48.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.580Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS开发">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2019/11/28/isa-2/"/>
+
+
+
+
+
+  <title>isa(二) | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2019/11/28/isa-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">isa(二)</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-11-28T15:57:48+08:00">
+                2019-11-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/11/28/isa-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/11/28/isa-2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  3.4k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  15 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/05f451102e18">前一篇</a>介绍过<code>isa</code>的优化方式以及从被优化过的<code>isa</code>中获取真正的<code>struct objc_class</code>指针。然而我们对知识的渴望，并不允许自己仅仅只是知道它、了解它而已，还想进一步分析<code>struct objc_class</code>结构体，以及用它来做点什么。<br>接下来，从<code>isa指针中到底有哪些信息</code>和<code>获取到这些信息可以用来做什么</code>两个方面，来进一步揭开<code>isa</code>的面纱。</p>
+<h5 id="isa指针中到底有哪些信息？"><a href="#isa指针中到底有哪些信息？" class="headerlink" title="isa指针中到底有哪些信息？"></a>isa指针中到底有哪些信息？</h5><p>既然已经可以从一个实例对象中获取到<code>isa</code>指针，那么我们就直接用这个指针来<code>struct objc_class</code>中的数据。<br>要解析指针指向的地址中存放的数据，肯定需要知道<code>struct objc_class</code>的定义（中间有很多方法直接忽略掉，只看其数据结构）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">struct objc_class : objc_object &#123;</span><br><span class="line">    // Class ISA;</span><br><span class="line">    Class superclass;</span><br><span class="line">    cache_t cache;             // formerly cache pointer and vtable</span><br><span class="line">    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为指针占用的内存空间是8字节，所以通过看其结构体的构成，可以知道前16个字节里存放的是<code>struct objc_class *</code>类型的指针<code>ISA</code>和<code>superclass</code>。<br>这两个指针，实际上存储的是类对象的父类以及元类的指针。父类和元类的解析，因为类型一样，所以和自身的解析是一样的。<br>第17个字节开始，存放的是<code>cache_t</code>类型的数据，但是这个数据并没有使用指针，所以它里面的数据，会有序并字节对齐的存放在第17个字节开始的位置。可以通过<code>cache_t</code>结构体来查看其数据类型：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">struct cache_t &#123;</span><br><span class="line">    struct bucket_t *_buckets;</span><br><span class="line">    mask_t _mask;</span><br><span class="line">    mask_t _occupied;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#if __LP64__</span><br><span class="line">typedef uint32_t mask_t;  // x86_64 &amp; arm64 asm are less efficient with 16-bits</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>struct cache_t</code>里面有一个指针，占8字节内存；有两个<code>mask_t</code>类型（即<code>uint32_t</code>类型）的数据，每个占4字节的内存，所以<code>cache_t cache</code>一共占16个字节的内存。<br>这个字段里，存放的是方法缓存相关的信息。<br>最后一个结构体<code>class_data_bits_t bits</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct class_data_bits_t &#123;</span><br><span class="line">    // Values are the FAST_ flags above.</span><br><span class="line">    uintptr_t bits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>里面就一个占8字节的数据。<br>从这个结构体的名字可以看出，类的主要信息都存储在这个字段里。这个字段里存储的是<code>class_rw_t</code>类型的指针，但是也不是直接将指针的值存进去的，和被优化的isa一样被优化过的，所以不能直接取出来用。那么要怎么获取到这个指针呢？<br>在源码中往下看<code>struct class_data_bits_t</code>这个结构体，会发现有一个<code>data()</code>方法，返回一个<code>class_rw_t*</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// data pointer</span><br><span class="line">#define FAST_DATA_MASK          0x00007ffffffffff8UL</span><br><span class="line"></span><br><span class="line">class_rw_t* data() &#123;</span><br><span class="line">        return (class_rw_t *)(bits &amp; FAST_DATA_MASK);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>所以其实我们也可以将获取的<code>bits</code>的值，和0x00007ffffffffff8UL进行<code>&amp;</code>运算，得到<code>class_rw_t*</code>指针。<br>写个简单的代码，可以走一下这个顺序，验证一下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    NSString * appDelegateClassName;</span><br><span class="line"></span><br><span class="line">    appDelegateClassName = NSStringFromClass([AppDelegate class]);</span><br><span class="line">    </span><br><span class="line">    CustomClass *c = [CustomClass new];</span><br><span class="line">    c.i = 10;</span><br><span class="line">    c.obj = [NSObject new];</span><br><span class="line">    c.str = @&quot;i love code&quot;;</span><br><span class="line">    NSLog(@&quot;c:%p&quot;,c);</span><br><span class="line">    </span><br><span class="line">    //1、通过实例对象`c`,获取 isa 指针</span><br><span class="line">    uintptr_t c_isa = (*(uintptr_t *)c) &amp; 0x0000000FFFFFFFF8ULL;</span><br><span class="line">    </span><br><span class="line">    //2、获取 `class_data_bits_t bits` 的值</span><br><span class="line">    uintptr_t c_bits = *(uintptr_t *)((unsigned long long)c_isa + 4*8);</span><br><span class="line">    </span><br><span class="line">    //3、获取 `class_rw_t *`指针</span><br><span class="line">    uintptr_t rw_t = c_bits &amp; 0x00007ffffffffff8UL;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    return UIApplicationMain(argc, argv, nil, appDelegateClassName);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>虽说是验证，但是取到这个值，也不知道是不是正确的，反正值是取到了！<br>要想验证取的值是否正确，还得看看<code>class_rw_t *</code>里面的数据，是否是这个类的信息。<br>所以还是要跟进去看这个结构体：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">struct class_rw_t &#123;</span><br><span class="line">    // Be warned that Symbolication knows the layout of this structure.</span><br><span class="line">    uint32_t flags;</span><br><span class="line">    uint32_t version;</span><br><span class="line"></span><br><span class="line">    const class_ro_t *ro;</span><br><span class="line"></span><br><span class="line">    method_array_t methods;</span><br><span class="line">    property_array_t properties;</span><br><span class="line">    protocol_array_t protocols;</span><br><span class="line"></span><br><span class="line">    Class firstSubclass;</span><br><span class="line">    Class nextSiblingClass;</span><br><span class="line"></span><br><span class="line">    char *demangledName;</span><br></pre></td></tr></table></figure>
+<p>还是按照刚才的思路，挨个字段去解析：</p>
+<ul>
+<li>flags</li>
+<li>version</li>
+<li>ro<br>const 修饰的 <code>class_ro_t  *</code> 指针，储了当前类在编译期就已经确定的属性、方法以及遵循的协议，不可修改。</li>
+<li>methods<br>实例方法列表（元类中存储的是类方法列表），是一个指向<code>method_t</code>的二级指针。</li>
+<li>properties<br> 属性列表。</li>
+<li>protocols<br>协议列表<br>这里主要关注<code>ro</code>、<code>methods</code>、<code>properties</code>以及<code>protocols</code>字段。<br>先看一下<code>ro</code>的类型<code>class_ro_t </code>的结构：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">struct class_ro_t &#123;</span><br><span class="line">    uint32_t flags;</span><br><span class="line">    uint32_t instanceStart;</span><br><span class="line">    uint32_t instanceSize;</span><br><span class="line">#ifdef __LP64__</span><br><span class="line">    uint32_t reserved;</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">    const uint8_t * ivarLayout;</span><br><span class="line">    </span><br><span class="line">    const char * name;</span><br><span class="line">    method_list_t * baseMethodList;</span><br><span class="line">    protocol_list_t * baseProtocols;</span><br><span class="line">    const ivar_list_t * ivars;</span><br><span class="line"></span><br><span class="line">    const uint8_t * weakIvarLayout;</span><br><span class="line">    property_list_t *baseProperties;</span><br><span class="line"></span><br><span class="line">    method_list_t *baseMethods() const &#123;</span><br><span class="line">        return baseMethodList;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+刚刚的代码中，我们以及获取到了<code>class_rw_t </code>指针的值，我们可以通过读取<code>class_rw_t</code>中<code>ro</code>字段的值，然后获取<code>class_ro_t</code>里面<code>name</code>，来判断我们获取的指针是否正确：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    NSString * appDelegateClassName;</span><br><span class="line"></span><br><span class="line">    appDelegateClassName = NSStringFromClass([AppDelegate class]);</span><br><span class="line">    </span><br><span class="line">    CustomClass *c = [CustomClass new];</span><br><span class="line">    c.i = 10;</span><br><span class="line">    c.obj = [NSObject new];</span><br><span class="line">    c.str = @&quot;i love code&quot;;</span><br><span class="line">    NSLog(@&quot;c:%p&quot;,c);</span><br><span class="line">    </span><br><span class="line">    //1、通过实例对象`c`,获取 isa 指针</span><br><span class="line">    uintptr_t c_isa = (*(uintptr_t *)c) &amp; 0x0000000FFFFFFFF8ULL;</span><br><span class="line">    </span><br><span class="line">    //2、获取 `class_data_bits_t bits` 的值</span><br><span class="line">    uintptr_t c_bits = *(uintptr_t *)((unsigned long long)c_isa + 4*8);</span><br><span class="line">    </span><br><span class="line">    //3、获取 `class_rw_t *`指针</span><br><span class="line">    uintptr_t rw_t = c_bits &amp; 0x00007ffffffffff8UL;</span><br><span class="line">    </span><br><span class="line">    //4、获取 `class_rw_t` 中 ro 指针</span><br><span class="line">    uintptr_t ro = *(uintptr_t *)((unsigned long long)rw_t+4+4);</span><br><span class="line">    </span><br><span class="line">    //5、获取 `class_ro_t` 中的 `name`</span><br><span class="line">    </span><br><span class="line">    const char *name = (const char *)(*(uintptr_t *)((unsigned long long)ro + 4 +4 + 4 +4 + 8));</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">   /*这里下断点*/ return UIApplicationMain(argc, argv, nil, appDelegateClassName);     </span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2019-11-25 00:00:30.956322+0800 IvarDemo[11902:3499502] c:0x1740261c0</span><br><span class="line">(lldb) p/s name</span><br><span class="line">(const char *) $0 = &quot;CustomClass&quot; &quot;CustomClass&quot;</span><br><span class="line">(lldb) </span><br></pre></td></tr></table></figure>
+看log，可以看出，取出的值都是正确的。<br>既然<code>name</code>可以取出，那么其他的字段，也是可以取出的，例如在 <code>8byte~12byte</code> 存储的<code>instanceSize</code>：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">    </span><br><span class="line">    //6、获取 `class_ro_t` 中的 `instanceSize`</span><br><span class="line">    uint32_t instanceSize = *(uint32_t *)((unsigned long long)ro + 4 +4);</span><br><span class="line">/*</span><br><span class="line">使用 class_getInstanceSize()   函数验证</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(lldb) p/d instanceSize</span><br><span class="line">(uint32_t) $0 = 32</span><br><span class="line">Printing description of c:</span><br><span class="line">&lt;CustomClass: 0x17002f340&gt;</span><br><span class="line">(lldb) p/d (uint32_t)class_getInstanceSize([c class])    </span><br><span class="line">(uint32_t) $3 = 32</span><br><span class="line">(lldb) </span><br></pre></td></tr></table></figure>
+其他字段就不一一获取。<br>回过头去看看<code>class_rw_t </code>中的<code>methods </code>字段。<br>还是先看其定义：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">class method_array_t : </span><br><span class="line">    public list_array_tt&lt;method_t, method_list_t&gt; </span><br><span class="line">&#123;</span><br><span class="line">    typedef list_array_tt&lt;method_t, method_list_t&gt; Super;</span><br><span class="line"></span><br><span class="line"> public:</span><br><span class="line">    method_list_t **beginCategoryMethodLists() &#123;</span><br><span class="line">        return beginLists();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    method_list_t **endCategoryMethodLists(Class cls);</span><br><span class="line"></span><br><span class="line">    method_array_t duplicate() &#123;</span><br><span class="line">        return Super::duplicate&lt;method_array_t&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<code>method_array_t</code>是一个C++类，且其继承自模板类<code>list_array_tt</code>，所以我们还得了解一下<code>list_array_tt </code>这个模板类：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">template &lt;typename Element, typename List&gt;</span><br><span class="line">class list_array_tt &#123;</span><br><span class="line">...</span><br><span class="line"> private:</span><br><span class="line">    union &#123;</span><br><span class="line">        List* list;</span><br><span class="line">        uintptr_t arrayAndFlag;</span><br><span class="line">    &#125;;</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+从结构中可以看出，<code>method_array_t</code>类只占8字节的内存空间，成员用<code>union</code>联合，说明<code>list </code>和<code>arrayAndFlag </code>公用8字节的空间。<br>我们知道<code>List</code>在类<code>method_array_t</code>中是<code>method_array_t</code>，但是既然定义成联合，那么肯定不是简单的将<code>method_array_t</code>指针存入这8个字节的，所以现在问题就变成了：怎么获取真正的<code>method_array_t</code>指针的值。<br>观察这个模板类，发现里面有一个<code>List** beginLists()</code>方法：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">List** beginLists() &#123;</span><br><span class="line">        if (hasArray()) &#123;</span><br><span class="line">            return array()-&gt;lists;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            return &amp;list;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">bool hasArray() const &#123;</span><br><span class="line">        return arrayAndFlag &amp; 1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">array_t *array() &#123;</span><br><span class="line">        return (array_t *)(arrayAndFlag &amp; ~1);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+以上三个的函数告诉了咱们怎么通过<code>arrayAndFlag </code>获取真正的<code>List**</code>：<br>1、判断<code>arrayAndFlag</code>最后一位是否为1；<br>2、通过判断结果，分别获取<code>List**</code>；</li>
+<li>判断正确：<code>array()-&gt;lists</code>;</li>
+<li>否则：<code>&amp;list</code>;</li>
+</ul>
+<p>接下来，我们也可以书写代码，尝试着获取<code>List**</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    NSString * appDelegateClassName;</span><br><span class="line"></span><br><span class="line">    appDelegateClassName = NSStringFromClass([AppDelegate class]);</span><br><span class="line">    </span><br><span class="line">    CustomClass *c = [CustomClass new];</span><br><span class="line">    c.i = 10;</span><br><span class="line">    c.obj = [NSObject new];</span><br><span class="line">    c.str = @&quot;i love code&quot;;</span><br><span class="line">    NSLog(@&quot;c:%p&quot;,c);</span><br><span class="line">    </span><br><span class="line">    //1、通过实例对象`c`,获取 isa 指针</span><br><span class="line">    uintptr_t c_isa = (*(uintptr_t *)c) &amp; 0x0000000FFFFFFFF8ULL;</span><br><span class="line">    </span><br><span class="line">    //2、获取 `class_data_bits_t bits` 的值</span><br><span class="line">    uintptr_t c_bits = *(uintptr_t *)((unsigned long long)c_isa + 4*8);</span><br><span class="line">    </span><br><span class="line">    //3、获取 `class_rw_t *`指针</span><br><span class="line">    uintptr_t rw_t = c_bits &amp; 0x00007ffffffffff8UL;</span><br><span class="line">    </span><br><span class="line">    //4、获取 `class_rw_t` 中 ro 指针</span><br><span class="line">    uintptr_t ro = *(uintptr_t *)((unsigned long long)rw_t+4+4);</span><br><span class="line">    </span><br><span class="line">    //5、获取 `class_ro_t` 中的 `name`</span><br><span class="line">    </span><br><span class="line">    const char *name = (const char *)(*(uintptr_t *)((unsigned long long)ro + 4 +4 + 4 +4 + 8));</span><br><span class="line">    </span><br><span class="line">    //6、获取 `class_ro_t` 中的 `instanceSize`</span><br><span class="line">    uint32_t instanceSize = *(uint32_t *)((unsigned long long)ro + 4 +4);</span><br><span class="line">    </span><br><span class="line">    //7、获取  `class_rw_t` 中 `method`</span><br><span class="line">    </span><br><span class="line">    uintptr_t method = *((uintptr_t *)(((unsigned long long)rw_t)+4+4+8));</span><br><span class="line">    </span><br><span class="line">    /*注：因为`method`成员没有用指针修饰，所以`method`的值即为</span><br><span class="line">     union</span><br><span class="line">     &#123;List *list;</span><br><span class="line">     uintptr_t arrayAndFlag;</span><br><span class="line">     </span><br><span class="line">     &#125;</span><br><span class="line">     的值。</span><br><span class="line">     */</span><br><span class="line">    //8、获取 `arrayAndFlag`的值</span><br><span class="line">    uintptr_t arrayAndFlag = method;</span><br><span class="line">    </span><br><span class="line">    //9、//获取 `List **`</span><br><span class="line">    uintptr_t *list;</span><br><span class="line">    //判断 `arrayAndFlag` 标志位</span><br><span class="line">    if (arrayAndFlag &amp; 1) &#123;</span><br><span class="line">        //获取 `array_t *`</span><br><span class="line">        uintptr_t array_t = arrayAndFlag &amp; ~1;</span><br><span class="line">        list = &amp;(*((uintptr_t *)((unsigned long long)array_t+8)));</span><br><span class="line">    &#125;else &#123;</span><br><span class="line">        //获取 `List **`</span><br><span class="line">        list = &amp;arrayAndFlag;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /*这里下断点*/ return UIApplicationMain(argc, argv, nil, appDelegateClassName);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>虽然到这里，已经获取到了<code>List **</code>（也就是<code>method_list_t**</code>），但是我们要找的方法列表，还只是初见端倪，并没有完全浮出水面。所以我们还是要进一步分析一下<code>method_list_t</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">struct method_list_t : entsize_list_tt&lt;method_t, method_list_t, 0x3&gt; &#123;</span><br><span class="line">    bool isFixedUp() const;</span><br><span class="line">    void setFixedUp();</span><br><span class="line"></span><br><span class="line">    uint32_t indexOfMethod(const method_t *meth) const &#123;</span><br><span class="line">        uint32_t i = </span><br><span class="line">            (uint32_t)(((uintptr_t)meth - (uintptr_t)this) / entsize());</span><br><span class="line">        assert(i &lt; count);</span><br><span class="line">        return i;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">template &lt;typename Element, typename List, uint32_t FlagMask&gt;</span><br><span class="line">struct entsize_list_tt &#123;</span><br><span class="line">    uint32_t entsizeAndFlags;</span><br><span class="line">    uint32_t count;</span><br><span class="line">    Element first;</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>method_list_t </code>结构体继承自模板结构体<code>entsize_list_tt </code>，所以<code>method_list_t</code>的成员变量有3个：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">uint32_t entsizeAndFlags;</span><br><span class="line">uint32_t count;</span><br><span class="line">Element first;</span><br></pre></td></tr></table></figure>
+<p>我们要关注的，是<code>count</code>和<code>first</code>；<code>count</code>中存储的是方法个数，而<code>first</code>则是方法列表的其实地址，也就是方法数组的第一个元素。（至于第一个<code>entsizeAndFlags</code>，存储的是数组中每个元素的大小。）<br>既然可以看到其内存布局，也就意味着我们可以获取到数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    NSString * appDelegateClassName;</span><br><span class="line"></span><br><span class="line">    appDelegateClassName = NSStringFromClass([AppDelegate class]);</span><br><span class="line">    </span><br><span class="line">    CustomClass *c = [CustomClass new];</span><br><span class="line">    NSLog(@&quot;c:%p&quot;,c);</span><br><span class="line">    </span><br><span class="line">    //1、通过实例对象`c`,获取 isa 指针</span><br><span class="line">    uintptr_t c_isa = (*(uintptr_t *)c) &amp; 0x0000000FFFFFFFF8ULL;</span><br><span class="line">    </span><br><span class="line">    //2、获取 `class_data_bits_t bits` 的值</span><br><span class="line">    uintptr_t c_bits = *(uintptr_t *)((unsigned long long)c_isa + 4*8);</span><br><span class="line">    </span><br><span class="line">    //3、获取 `class_rw_t *`指针</span><br><span class="line">    uintptr_t rw_t = c_bits &amp; 0x00007ffffffffff8UL;</span><br><span class="line">    </span><br><span class="line">    //4、获取 `class_rw_t` 中 ro 指针</span><br><span class="line">    uintptr_t ro = *(uintptr_t *)((unsigned long long)rw_t+4+4);</span><br><span class="line">    </span><br><span class="line">    //5、获取 `class_ro_t` 中的 `name`</span><br><span class="line">    </span><br><span class="line">    const char *name = (const char *)(*(uintptr_t *)((unsigned long long)ro + 4 +4 + 4 +4 + 8));</span><br><span class="line">    </span><br><span class="line">    //6、获取 `class_ro_t` 中的 `instanceSize`</span><br><span class="line">    uint32_t instanceSize = *(uint32_t *)((unsigned long long)ro + 4 +4);</span><br><span class="line">    </span><br><span class="line">    //7、获取  `class_rw_t` 中 `method`</span><br><span class="line">    </span><br><span class="line">    uintptr_t method = *((uintptr_t *)(((unsigned long long)rw_t)+4+4+8));</span><br><span class="line">    </span><br><span class="line">    /*注：因为`method`成员没有用指针修饰，所以`method`的值即为</span><br><span class="line">     union</span><br><span class="line">     &#123;List *list;</span><br><span class="line">     uintptr_t arrayAndFlag;</span><br><span class="line">     </span><br><span class="line">     &#125;</span><br><span class="line">     的值。</span><br><span class="line">     */</span><br><span class="line">    //8、获取 `arrayAndFlag`的值</span><br><span class="line">    uintptr_t arrayAndFlag = method;</span><br><span class="line">    </span><br><span class="line">    //9、//获取 `List **`</span><br><span class="line">    uintptr_t *list;</span><br><span class="line">    //判断 `arrayAndFlag` 标志位</span><br><span class="line">    if (arrayAndFlag &amp; 1) &#123;</span><br><span class="line">        //获取 `array_t *`</span><br><span class="line">        uintptr_t array_t = arrayAndFlag &amp; ~1;</span><br><span class="line">        list = &amp;(*((uintptr_t *)((unsigned long long)array_t+8)));</span><br><span class="line">    &#125;else &#123;</span><br><span class="line">        //获取 `List **`</span><br><span class="line">        list = &amp;arrayAndFlag;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    //10、获取`method_list_t` 中的 `count`</span><br><span class="line">        //获取`method_list_t *`指针</span><br><span class="line">    uintptr_t method_list_t = *list;</span><br><span class="line">        //获取`count`</span><br><span class="line">    uint32_t count = *(uint32_t *)((unsigned long long)method_list_t + 4);</span><br><span class="line">    </span><br><span class="line">    //11、获取 `method_list_t`中的`first`</span><br><span class="line">    /* 这里为了更好的获取方法信息，定义结构体struct method_t */</span><br><span class="line">    struct sl_method_t &#123;</span><br><span class="line">        SEL name;</span><br><span class="line">        const char *types;</span><br><span class="line">        IMP imp;</span><br><span class="line">    &#125;;</span><br><span class="line">    struct sl_method_t first =*((struct sl_method_t *)((unsigned long long)method_list_t + 4 + 4));</span><br><span class="line">    </span><br><span class="line">    //12、打印所有方法的信息</span><br><span class="line">        //获取数组中每个元素的大小</span><br><span class="line">    uint32_t entsizeAndFlags = *(uint32_t *)((unsigned long long)method_list_t);</span><br><span class="line">    /*</span><br><span class="line">     uint32_t entsize() const &#123;</span><br><span class="line">         return entsizeAndFlags &amp; ~FlagMask;</span><br><span class="line">     &#125;</span><br><span class="line">     */</span><br><span class="line">    uint32_t entsize = entsizeAndFlags &amp; ~0x3;</span><br><span class="line">        </span><br><span class="line">    for (int i=0; i&lt;count; i++) &#123;</span><br><span class="line">        </span><br><span class="line">        struct sl_method_t method = *((struct sl_method_t *)((unsigned long long)method_list_t + 4 + 4 + i*entsize));</span><br><span class="line">        </span><br><span class="line">        printf(&quot;method_name:%s \t method_types:%s \t method_imp:0x%llx&quot;,method.name,method.types,(unsigned long long)(method.imp));</span><br><span class="line">        </span><br><span class="line">        printf(&quot;\n&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">       </span><br><span class="line">    /*这里下断点*/ return UIApplicationMain(argc, argv, nil, appDelegateClassName);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">method_name:setStr: 	 method_types:v24@0:8@16 	 method_imp:0x1000a8120</span><br><span class="line">method_name:setObj: 	 method_types:v24@0:8@16 	 method_imp:0x1000a8174</span><br><span class="line">method_name:.cxx_destruct 	 method_types:v16@0:8 	 method_imp:0x1000a81b4</span><br><span class="line">method_name:str 	 method_types:@16@0:8 	 method_imp:0x1000a80e8</span><br><span class="line">method_name:setI: 	 method_types:v20@0:8i16 	 method_imp:0x1000a80c4</span><br><span class="line">method_name:i 	 method_types:i16@0:8 	 method_imp:0x1000a80a8</span><br><span class="line">method_name:obj 	 method_types:@16@0:8 	 method_imp:0x1000a8158</span><br><span class="line">(lldb) </span><br></pre></td></tr></table></figure>
+<p>到这里，就意味着<code>struct class_rw_t</code> 中的<code>method_array_t methods</code>已经完全被解析出来了。<br>那么同样的，其他几个字段的内容，也是可以获取到的。（例如：<code>    property_array_t properties; protocol_array_t protocols</code>）。这里就不一一读取。<br>我们接下来的问题是：</p>
+<h5 id="获取到这些信息可以用来做什么？"><a href="#获取到这些信息可以用来做什么？" class="headerlink" title="获取到这些信息可以用来做什么？"></a>获取到这些信息可以用来做什么？</h5><p>最简单的，我们既然可以获取到类中每个方法的IMP，那么我们是否可以替换掉其指针，到达Hook的效果呢？<br>简单修改一下代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line">NSString * sl_str(id self,SEL sel)&#123;</span><br><span class="line">    return @&quot;hooked!!!&quot;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    NSString * appDelegateClassName;</span><br><span class="line"></span><br><span class="line">    appDelegateClassName = NSStringFromClass([AppDelegate class]);</span><br><span class="line">    </span><br><span class="line">    CustomClass *c = [CustomClass new];</span><br><span class="line">    NSLog(@&quot;c:%p&quot;,c);</span><br><span class="line">    </span><br><span class="line">    //1、通过实例对象`c`,获取 isa 指针</span><br><span class="line">    uintptr_t c_isa = (*(uintptr_t *)c) &amp; 0x0000000FFFFFFFF8ULL;</span><br><span class="line">    </span><br><span class="line">    //2、获取 `class_data_bits_t bits` 的值</span><br><span class="line">    uintptr_t c_bits = *(uintptr_t *)((unsigned long long)c_isa + 4*8);</span><br><span class="line">    </span><br><span class="line">    //3、获取 `class_rw_t *`指针</span><br><span class="line">    uintptr_t rw_t = c_bits &amp; 0x00007ffffffffff8UL;</span><br><span class="line">    </span><br><span class="line">    //4、获取 `class_rw_t` 中 ro 指针</span><br><span class="line">    uintptr_t ro = *(uintptr_t *)((unsigned long long)rw_t+4+4);</span><br><span class="line">    </span><br><span class="line">    //5、获取 `class_ro_t` 中的 `name`</span><br><span class="line">    </span><br><span class="line">    const char *name = (const char *)(*(uintptr_t *)((unsigned long long)ro + 4 +4 + 4 +4 + 8));</span><br><span class="line">    </span><br><span class="line">    //6、获取 `class_ro_t` 中的 `instanceSize`</span><br><span class="line">    uint32_t instanceSize = *(uint32_t *)((unsigned long long)ro + 4 +4);</span><br><span class="line">    </span><br><span class="line">    //7、获取  `class_rw_t` 中 `method`</span><br><span class="line">    </span><br><span class="line">    uintptr_t method = *((uintptr_t *)(((unsigned long long)rw_t)+4+4+8));</span><br><span class="line">    </span><br><span class="line">    /*注：因为`method`成员没有用指针修饰，所以`method`的值即为</span><br><span class="line">     union</span><br><span class="line">     &#123;List *list;</span><br><span class="line">     uintptr_t arrayAndFlag;</span><br><span class="line">     </span><br><span class="line">     &#125;</span><br><span class="line">     的值。</span><br><span class="line">     */</span><br><span class="line">    //8、获取 `arrayAndFlag`的值</span><br><span class="line">    uintptr_t arrayAndFlag = method;</span><br><span class="line">    </span><br><span class="line">    //9、//获取 `List **`</span><br><span class="line">    uintptr_t *list;</span><br><span class="line">    //判断 `arrayAndFlag` 标志位</span><br><span class="line">    if (arrayAndFlag &amp; 1) &#123;</span><br><span class="line">        //获取 `array_t *`</span><br><span class="line">        uintptr_t array_t = arrayAndFlag &amp; ~1;</span><br><span class="line">        list = &amp;(*((uintptr_t *)((unsigned long long)array_t+8)));</span><br><span class="line">    &#125;else &#123;</span><br><span class="line">        //获取 `List **`</span><br><span class="line">        list = &amp;arrayAndFlag;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    //10、获取`method_list_t` 中的 `count`</span><br><span class="line">        //获取`method_list_t *`指针</span><br><span class="line">    uintptr_t method_list_t = *list;</span><br><span class="line">        //获取`count`</span><br><span class="line">    uint32_t count = *(uint32_t *)((unsigned long long)method_list_t + 4);</span><br><span class="line">    </span><br><span class="line">    //11、获取 `method_list_t`中的`first`</span><br><span class="line">    /* 这里为了更好的获取方法信息，定义结构体struct method_t */</span><br><span class="line">    struct sl_method_t &#123;</span><br><span class="line">        SEL name;</span><br><span class="line">        const char *types;</span><br><span class="line">        IMP imp;</span><br><span class="line">    &#125;;</span><br><span class="line">    struct sl_method_t first =*((struct sl_method_t *)((unsigned long long)method_list_t + 4 + 4));</span><br><span class="line">    </span><br><span class="line">    //12、打印所有方法的信息</span><br><span class="line">        //获取数组中每个元素的大小</span><br><span class="line">    uint32_t entsizeAndFlags = *(uint32_t *)((unsigned long long)method_list_t);</span><br><span class="line">    /*</span><br><span class="line">     uint32_t entsize() const &#123;</span><br><span class="line">         return entsizeAndFlags &amp; ~FlagMask;</span><br><span class="line">     &#125;</span><br><span class="line">     */</span><br><span class="line">    uint32_t entsize = entsizeAndFlags &amp; ~0x3;</span><br><span class="line">        </span><br><span class="line">    for (int i=0; i&lt;count; i++) &#123;</span><br><span class="line">        </span><br><span class="line">        struct sl_method_t method = *((struct sl_method_t *)((unsigned long long)method_list_t + 4 + 4 + i*entsize));</span><br><span class="line">        </span><br><span class="line">        printf(&quot;method_name:%s \t method_types:%s \t method_imp:0x%llx&quot;,method.name,method.types,(unsigned long long)(method.imp));</span><br><span class="line">        </span><br><span class="line">        /*Hook `str` 方法*/</span><br><span class="line">        if (!strcmp((char *)(method.name), &quot;str&quot;)) &#123;</span><br><span class="line">            //修改IMP的值</span><br><span class="line">            *(uintptr_t *)((unsigned long long)method_list_t + 4 + 4 + i*entsize+8+8) = (uintptr_t)&amp;sl_str;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        printf(&quot;\n&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    //调用，检查是否被hook</span><br><span class="line">    NSString *str = [c str];</span><br><span class="line">    </span><br><span class="line">    /*这里下断点*/ return UIApplicationMain(argc, argv, nil, appDelegateClassName);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">method_name:setStr: 	 method_types:v24@0:8@16 	 method_imp:0x1000880fc</span><br><span class="line">method_name:setObj: 	 method_types:v24@0:8@16 	 method_imp:0x100088150</span><br><span class="line">method_name:.cxx_destruct 	 method_types:v16@0:8 	 method_imp:0x100088190</span><br><span class="line">method_name:str 	 method_types:@16@0:8 	 method_imp:0x1000880c4</span><br><span class="line">method_name:setI: 	 method_types:v20@0:8i16 	 method_imp:0x1000880a0</span><br><span class="line">method_name:i 	 method_types:i16@0:8 	 method_imp:0x100088084</span><br><span class="line">method_name:obj 	 method_types:@16@0:8 	 method_imp:0x100088134</span><br><span class="line">(lldb) po str</span><br><span class="line">hooked!!!</span><br><span class="line"></span><br><span class="line">(lldb) </span><br></pre></td></tr></table></figure>
+<p>看到最后的<code>hooked!!!</code>说明，hook成功了！<br>当然，完整的hook，并不是单纯的替换函数指针即可，还需要考虑很多问题，这里只是简单的测试一下可行性。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS%E5%BC%80%E5%8F%91/" rel="tag"><i class="fa fa-tag"></i> iOS开发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/28/isa/" rel="next" title="isa">
+                <i class="fa fa-chevron-left"></i> isa
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/11/30/Mach-O-file-analysis/" rel="prev" title="Mach-o文件解析">
+                Mach-o文件解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#isa%E6%8C%87%E9%92%88%E4%B8%AD%E5%88%B0%E5%BA%95%E6%9C%89%E5%93%AA%E4%BA%9B%E4%BF%A1%E6%81%AF%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">isa指针中到底有哪些信息？</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E5%88%B0%E8%BF%99%E4%BA%9B%E4%BF%A1%E6%81%AF%E5%8F%AF%E4%BB%A5%E7%94%A8%E6%9D%A5%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">获取到这些信息可以用来做什么？</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

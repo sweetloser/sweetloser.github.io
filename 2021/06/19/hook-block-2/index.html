@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="sweetloser" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前一篇讲了两个简单的Hook Block面试题目，主要了解一下基本的Hook Block的思路和注意的问题。实现都不算很难，属于基操，基本按照流程来就问题不大。 这里，打算对题目二进行一个额外的扩展，将题目改为： 12345678910111213141516&#x2F;&#x2F; 2.实现下面的函数，将任意参数 block 的实现修改成打印所有入参，并调用原始实现&#x2F;&#x2F;&#x2F;&#x2F; 比如&#x2F;&#x2F;  void(^block)(i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS面试 —— Hook Block（2）">
+<meta property="og:url" content="https://www.sweetloser.com/2021/06/19/hook-block-2/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="前一篇讲了两个简单的Hook Block面试题目，主要了解一下基本的Hook Block的思路和注意的问题。实现都不算很难，属于基操，基本按照流程来就问题不大。 这里，打算对题目二进行一个额外的扩展，将题目改为： 12345678910111213141516&#x2F;&#x2F; 2.实现下面的函数，将任意参数 block 的实现修改成打印所有入参，并调用原始实现&#x2F;&#x2F;&#x2F;&#x2F; 比如&#x2F;&#x2F;  void(^block)(i">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-06-19T01:47:56.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.569Z">
+<meta property="article:author" content="SweetLoser">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2021/06/19/hook-block-2/"/>
+
+
+
+
+
+  <title>iOS面试 —— Hook Block（2） | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2021/06/19/hook-block-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iOS面试 —— Hook Block（2）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-19T09:47:56+08:00">
+                2021-06-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2021/06/19/hook-block-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2021/06/19/hook-block-2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  2.2k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  11 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前一篇讲了两个简单的Hook Block面试题目，主要了解一下基本的Hook Block的思路和注意的问题。实现都不算很难，属于基操，基本按照流程来就问题不大。</p>
+<p>这里，打算对<code>题目二</code>进行一个额外的扩展，将题目改为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">// 2.实现下面的函数，将任意参数 block 的实现修改成打印所有入参，并调用原始实现</span><br><span class="line">//</span><br><span class="line">// 比如</span><br><span class="line">//  void(^block)(int a, NSString *b) = ^(int a, NSString *b)&#123;</span><br><span class="line">//      NSLog(@&quot;block invoke&quot;);</span><br><span class="line">//  &#125;</span><br><span class="line">//  HookBlockToPrintArguments(block);</span><br><span class="line">//  block(123,@&quot;aaa&quot;);</span><br><span class="line">//  这里输出 &quot;123,aaa&quot; 和 &quot;block invoke&quot;</span><br><span class="line"></span><br><span class="line">//  void(^block)(int a, double b) = ^(int a, double b)&#123;</span><br><span class="line">//      NSLog(@&quot;block invoke&quot;);</span><br><span class="line">//  &#125;</span><br><span class="line">//  HookBlockToPrintArguments(block);</span><br><span class="line">//  block(123,3.14);</span><br><span class="line">//  这里输出 &quot;123,3.14&quot; 和 &quot;block invoke&quot;</span><br></pre></td></tr></table></figure>
+
+<p>分析题目：首先，题目的本意和原本的题目二一样，就是hook block 的 invoke，然后将其所有的入参打印出来，再调用原实现。区别在于“任意Block”，这个任意block，就让我们无法对用来替换的函数有一个很合适的定义，因为我们定义的时候，根本就不知道我们即将hook的block有几个参数。</p>
+<p>基于这个不确定性的参数，我们第一反应肯定是变参函数。如果将其定义为变参函数，是不是就解决了这个问题呢？</p>
+<p>经过实践，效果似乎不太理想。主要原因猜测是因为变参函数的实参传入时存储的寄存器和定参函数实参传入的寄存器有所出入。仔细一想其实好像也是这么一回事，就像对象或者结构体一样，即使在运行过程中，可以用类型转换将其转换为任意结构体或者对象，但是它本质是不会变的，如果使用不当，就会产生问题。当然，这点仅仅是猜测，还未深究，总之就是变参函数这条路，我们是走不通的。</p>
+<p>既然我们能现有的想到的方法无法如愿，那我们就只能另辟蹊径（百度google一顿搜索）了。网上也有挺多介绍hook block的示例代码，但是他们的思路都基本是用block hook block。总结一下就是“极限一换一”。怎么极限一换一呢？其实就是把目前我们遇到的问题，丢给使用者，就是让使用者实现一个block去hook 使用者想hook的block。当然，这个block是有要求的，就是要和厡block的返回值，参数类型和个数等等都一致，不然就GG。这显然不是我们最理想的解决办法。</p>
+<p>抱着我们不可能是第一个遇到这个问题的人的信念，总算找到了我们想要的<a target="_blank" rel="noopener" href="https://github.com/yulingtianxia/BlockHook">思路</a>（其实包括实现都有）。鉴于这个代码已经封装成一个能使用的库了，直接使用显然不太符合我们的初衷，所以我们还是舍近求远，摒弃现有工具，直接对着源码理清思路自己操作。</p>
+<p>源码里提到了另一个库<a target="_blank" rel="noopener" href="https://github.com/libffi/libffi">libffi</a>，这个是重点，我们遇到的问题，就靠它解决。</p>
+<p>首先讲一下我查看源码看到的一个大致思路：</p>
+<p>1、获取要hook的block的相关信息，例如返回值、参数列表。这些信息都存储在bkock的方法签名里。</p>
+<p>2、通过上一步获取到的信息，利用<code>libffi</code>创建一个函数模板（<code>ffi_prep_cif()</code>）。</p>
+<p>3、创建动态调用函数，并替换block中的Invoke。</p>
+<p>4、编写替换函数，并实现调用原函数。</p>
+<p>思路基本就是这个样子。那我们现在就来写点代码走一下流程：</p>
+<p>首先获取block的相关信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">struct Block_layout *layout = (__bridge struct Block_layout *)block;</span><br><span class="line">   </span><br><span class="line">   if (! (layout-&gt;flags &amp; BLOCK_HAS_SIGNATURE))&#123;</span><br><span class="line">       NSLog(@&quot;当前block没有签名&quot;);</span><br><span class="line">       return;</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   uint8_t *desc = (uint8_t *)layout-&gt;descriptor;</span><br><span class="line">   </span><br><span class="line">   desc += sizeof(struct Block_descriptor_1);</span><br><span class="line">   </span><br><span class="line">   if (layout-&gt;flags &amp; BLOCK_HAS_COPY_DISPOSE) &#123;</span><br><span class="line">       desc += sizeof(struct Block_descriptor_2);</span><br><span class="line">   &#125;</span><br><span class="line">   struct Block_descriptor_3 *desc_3 = (struct Block_descriptor_3 *)desc;</span><br><span class="line">   </span><br><span class="line">   const char *signature = desc_3-&gt;signature;</span><br><span class="line">   NSMethodSignature *m_signature = [NSMethodSignature signatureWithObjCTypes:signature];</span><br></pre></td></tr></table></figure>
+
+<p>创建函数模板：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">ffi_type **args = malloc(sizeof(ffi_type *)*[m_signature numberOfArguments]);</span><br><span class="line"></span><br><span class="line">//	返回值类型</span><br><span class="line">    ffi_type *return_ffi;</span><br><span class="line">    const char *return_type = [m_signature methodReturnType];</span><br><span class="line">    if (*return_type == @encode(_Bool)[0]) &#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_sint8;</span><br><span class="line">    &#125;else if (*return_type == @encode(signed char)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_sint8;</span><br><span class="line">    &#125;else if (*return_type == @encode(unsigned char)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_uint8;</span><br><span class="line">    &#125;else if (*return_type == @encode(short)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_sint16;</span><br><span class="line">    &#125;else if (*return_type == @encode(int)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_sint32;</span><br><span class="line">    &#125;else if (*return_type == @encode(long)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_sint64;</span><br><span class="line">    &#125;else if (*return_type == @encode(long long)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_sint64;</span><br><span class="line">    &#125;else if (*return_type == @encode(id)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_pointer;</span><br><span class="line">    &#125;else if (*return_type == @encode(Class)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_pointer;</span><br><span class="line">    &#125;else if (*return_type == @encode(SEL)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_pointer;</span><br><span class="line">    &#125;else if (*return_type == @encode(void *)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_pointer;</span><br><span class="line">    &#125;else if (*return_type == @encode(char *)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_pointer;</span><br><span class="line">    &#125;else if (*return_type == @encode(float)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_float;</span><br><span class="line">    &#125;else if (*return_type == @encode(double)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_double;</span><br><span class="line">    &#125;else if (*return_type == @encode(void)[0])&#123;</span><br><span class="line">        return_ffi = &amp;ffi_type_void;</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        NSLog(@&quot;未找到合适的类型&quot;);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    //    初始化参数列表</span><br><span class="line">    for (int i=0; i&lt;[m_signature numberOfArguments]; i++) &#123;</span><br><span class="line">        const char *type = [m_signature getArgumentTypeAtIndex:i];</span><br><span class="line">        if (*type == @encode(_Bool)[0]) &#123;</span><br><span class="line">            args[i] = &amp;ffi_type_sint8;</span><br><span class="line">        &#125;else if (*type == @encode(signed char)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_sint8;</span><br><span class="line">        &#125;else if (*type == @encode(unsigned char)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_uint8;</span><br><span class="line">        &#125;else if (*type == @encode(short)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_sint16;</span><br><span class="line">        &#125;else if (*type == @encode(int)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_sint32;</span><br><span class="line">        &#125;else if (*type == @encode(long)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_sint64;</span><br><span class="line">        &#125;else if (*type == @encode(long long)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_sint64;</span><br><span class="line">        &#125;else if (*type == @encode(id)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_pointer;</span><br><span class="line">        &#125;else if (*type == @encode(Class)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_pointer;</span><br><span class="line">        &#125;else if (*type == @encode(SEL)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_pointer;</span><br><span class="line">        &#125;else if (*type == @encode(void *)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_pointer;</span><br><span class="line">        &#125;else if (*type == @encode(char *)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_pointer;</span><br><span class="line">        &#125;else if (*type == @encode(float)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_float;</span><br><span class="line">        &#125;else if (*type == @encode(double)[0])&#123;</span><br><span class="line">            args[i] = &amp;ffi_type_double;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            NSLog(@&quot;未知类型：注，结构体未处理&quot;);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">//	_cif 定义的是全局变量		ffi_cif _cif;</span><br><span class="line">    ffi_status status = ffi_prep_cif(&amp;_cif, FFI_DEFAULT_ABI, (int)[m_signature numberOfArguments], return_ffi, args);</span><br><span class="line">    if (status != FFI_OK) &#123;</span><br><span class="line">        NSLog(@&quot;初始化 cif 失败&quot;);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建并绑定动态调用的函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// 	_closure 定义的是全局变量		ffi_closure *_closure;</span><br><span class="line">// 	_replacementInvoke 定义的是全局变量		void *_replacementInvoke;</span><br><span class="line"></span><br><span class="line">_closure = ffi_closure_alloc(sizeof(ffi_closure), &amp;_replacementInvoke);</span><br><span class="line">   if (!_closure) &#123;</span><br><span class="line">       NSLog(@&quot;hook 失败&quot;);</span><br><span class="line">       return;</span><br><span class="line">   &#125;</span><br><span class="line">ffi_status closure_loc_status = ffi_prep_closure_loc(_closure, &amp;_cif, replace_bloke2_2, (__bridge void *)(NSObject.new), _replacementInvoke);</span><br><span class="line">   if (closure_loc_status != FFI_OK) &#123;</span><br><span class="line">       NSLog(@&quot;Hook failed! ffi_prep_closure returned %d&quot;, (int)status);</span><br><span class="line">       return;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>替换block的invoke：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">//    修改内存属性</span><br><span class="line">    vm_address_t invoke_addr = (vm_address_t)&amp;layout-&gt;invoke;</span><br><span class="line">    vm_size_t vmsize = 0;</span><br><span class="line">    mach_port_t object = 0;</span><br><span class="line">    vm_region_basic_info_data_64_t info;</span><br><span class="line">    mach_msg_type_number_t infoCnt = VM_REGION_BASIC_INFO_COUNT_64;</span><br><span class="line">    kern_return_t ret = vm_region_64(mach_task_self(), &amp;invoke_addr, &amp;vmsize, VM_REGION_BASIC_INFO, (vm_region_info_t)&amp;info, &amp;infoCnt, &amp;object);</span><br><span class="line">    if (ret != KERN_SUCCESS) &#123;</span><br><span class="line">        NSLog(@&quot;获取失败&quot;);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    vm_prot_t protection = info.protection;</span><br><span class="line">//    判断内存是否可写</span><br><span class="line">    if ((protection&amp;VM_PROT_WRITE) == 0) &#123;</span><br><span class="line">//        修改内存属性 ===&gt; 可写</span><br><span class="line">        ret = vm_protect(mach_task_self(), invoke_addr, sizeof(invoke_addr), false, protection|VM_PROT_WRITE);</span><br><span class="line">        if (ret != KERN_SUCCESS) &#123;</span><br><span class="line">            NSLog(@&quot;修改失败&quot;);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">//    保存原来的invoke</span><br><span class="line">    origin_blockInvoke2_2 = (void *)layout-&gt;invoke;</span><br><span class="line">    layout-&gt;invoke = (uintptr_t)_replacementInvoke;</span><br></pre></td></tr></table></figure>
+
+<p>还有最后一步，也是最关键的一步，实现替换的函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">void replace_bloke2_2(ffi_cif *cif, void *ret, void **args, void *userdata) &#123;</span><br><span class="line">    struct Block_layout *layout = (struct Block_layout *)userdata;</span><br><span class="line">    uint8_t *desc = (uint8_t *)layout-&gt;descriptor;</span><br><span class="line">    </span><br><span class="line">    desc += sizeof(struct Block_descriptor_1);</span><br><span class="line">    </span><br><span class="line">    if (layout-&gt;flags &amp; BLOCK_HAS_COPY_DISPOSE) &#123;</span><br><span class="line">        desc += sizeof(struct Block_descriptor_2);</span><br><span class="line">    &#125;</span><br><span class="line">    struct Block_descriptor_3 *desc_3 = (struct Block_descriptor_3 *)desc;</span><br><span class="line">    </span><br><span class="line">    const char *signature = desc_3-&gt;signature;</span><br><span class="line">    NSMethodSignature *m_signature = [NSMethodSignature signatureWithObjCTypes:signature];</span><br><span class="line">    </span><br><span class="line">    NSLog(@&quot;回调函数&quot;);</span><br><span class="line">    NSLog(@&quot;%d&quot;,cif-&gt;nargs);</span><br><span class="line">//    解析参数</span><br><span class="line">    for (int i=0; i&lt;[m_signature numberOfArguments]; i++) &#123;</span><br><span class="line">        ffi_type *arg = args[i];</span><br><span class="line">        const char *type = [m_signature getArgumentTypeAtIndex:i];</span><br><span class="line">        if (*type == @encode(_Bool)[0]) &#123;</span><br><span class="line">            NSLog(@&quot;%d&quot;,(bool)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(signed char)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%d&quot;,(char)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(unsigned char)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%d&quot;,(unsigned char)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(short)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%d&quot;,(short)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(int)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%d&quot;,(int)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(long)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%ld&quot;,(long)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(long long)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%lld&quot;,(long long)arg-&gt;size);</span><br><span class="line">        &#125;else if (*type == @encode(id)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%@&quot;,(__bridge id)((void *)arg-&gt;size));</span><br><span class="line">        &#125;else if (*type == @encode(Class)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%@&quot;,(__bridge Class)((void *)arg-&gt;size));</span><br><span class="line">        &#125;else if (*type == @encode(SEL)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%s&quot;,((char *)arg-&gt;size));</span><br><span class="line">        &#125;else if (*type == @encode(void *)[0])&#123;</span><br><span class="line">            NSLog(@&quot;0x%llx&quot;,((long long)arg-&gt;size));</span><br><span class="line">        &#125;else if (*type == @encode(char *)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%s&quot;,((char *)arg-&gt;size));</span><br><span class="line">        &#125;else if (*type == @encode(float)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%f&quot;,((float)arg-&gt;size));</span><br><span class="line">        &#125;else if (*type == @encode(double)[0])&#123;</span><br><span class="line">            NSLog(@&quot;%f&quot;,((double)arg-&gt;size));</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            NSLog(@&quot;未知类型：注，结构体未处理&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">//    调用原函数</span><br><span class="line">    ffi_call(&amp;_cif,(void *)origin_blockInvoke2_2, ret, args);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后测试代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">//        test2</span><br><span class="line">        void (^test_block2)(int a, NSString *b)= ^(int a, NSString *b) &#123;</span><br><span class="line">            NSLog(@&quot;test2: block invoke&quot;);</span><br><span class="line">        &#125;;</span><br><span class="line">        HookBlockToPrintArguments(test_block2);</span><br><span class="line">        test_block2((int)123,@&quot;bbb&quot;);</span><br><span class="line">        void (^test_block2_2)(int a, NSString *b,NSObject *c)= ^(int a, NSString *b,NSObject *c) &#123;</span><br><span class="line">            NSLog(@&quot;test2_2: block invoke&quot;);</span><br><span class="line">        &#125;;</span><br><span class="line">        HookBlockToPrintArguments(test_block2_2);</span><br><span class="line">        test_block2_2((int)123,@&quot;bbb&quot;,NSObject.new);</span><br></pre></td></tr></table></figure>
+
+<p>log如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">2021-06-19 12:06:59.020612+0800 HookBlockDemo[79596:3789053] &lt;__NSGlobalBlock__: 0x102d5c088&gt;</span><br><span class="line">2021-06-19 12:06:59.020637+0800 HookBlockDemo[79596:3789053] 123</span><br><span class="line">2021-06-19 12:06:59.020677+0800 HookBlockDemo[79596:3789053] bbb</span><br><span class="line">2021-06-19 12:06:59.020699+0800 HookBlockDemo[79596:3789053] test2: block invoke</span><br><span class="line">......</span><br><span class="line">2021-06-19 12:06:59.021114+0800 HookBlockDemo[79596:3789053] &lt;__NSGlobalBlock__: 0x102d5c0c8&gt;</span><br><span class="line">2021-06-19 12:06:59.021136+0800 HookBlockDemo[79596:3789053] 123</span><br><span class="line">2021-06-19 12:06:59.021177+0800 HookBlockDemo[79596:3789053] bbb</span><br><span class="line">2021-06-19 12:06:59.021315+0800 HookBlockDemo[79596:3789053] &lt;NSObject: 0x283c800d0&gt;</span><br><span class="line">2021-06-19 12:06:59.021348+0800 HookBlockDemo[79596:3789053] test2_2: block invoke</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/05/31/hook-block/" rel="next" title="iOS面试 —— Hook Block">
+                <i class="fa fa-chevron-left"></i> iOS面试 —— Hook Block
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2022/09/09/unhappy-matter-resolved/" rel="prev" title="不开心的事终于解决了">
+                不开心的事终于解决了 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

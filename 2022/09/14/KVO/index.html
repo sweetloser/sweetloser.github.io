@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS开发," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="KVO（键值观察）提供了一种机制，允许将其他对象的特定属性的更改通知给对象。 你可以观察包括简单属性、对一关系和对多关系在内的属性。对多关系的观察者被告知所做更改的类型，以及更改中涉及哪些对象。 KVO的主要好处是，你不必实现自己的方案来在每次属性更改时发送通知。其定义良好的基础设施具有框架级支持，这使其易于采用—通常不需要向项目添加任何代码。此外，该基础设施已经具有完整的功能，这使得对单个属性和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KVO">
+<meta property="og:url" content="https://www.sweetloser.com/2022/09/14/KVO/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="KVO（键值观察）提供了一种机制，允许将其他对象的特定属性的更改通知给对象。 你可以观察包括简单属性、对一关系和对多关系在内的属性。对多关系的观察者被告知所做更改的类型，以及更改中涉及哪些对象。 KVO的主要好处是，你不必实现自己的方案来在每次属性更改时发送通知。其定义良好的基础设施具有框架级支持，这使其易于采用—通常不需要向项目添加任何代码。此外，该基础设施已经具有完整的功能，这使得对单个属性和">
+<meta property="og:locale">
+<meta property="article:published_time" content="2022-09-14T15:32:14.000Z">
+<meta property="article:modified_time" content="2024-02-27T07:16:53.486Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS开发">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2022/09/14/KVO/"/>
+
+
+
+
+
+  <title>KVO | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2022/09/14/KVO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">KVO</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2022-09-14T23:32:14+08:00">
+                2022-09-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2022/09/14/KVO/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2022/09/14/KVO/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  2.6k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  9 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>KVO（键值观察）提供了一种机制，允许将其他对象的特定属性的更改通知给对象。</p>
+<p>你可以观察包括简单属性、对一关系和对多关系在内的属性。对多关系的观察者被告知所做更改的类型，以及更改中涉及哪些对象。</p>
+<p>KVO的主要好处是，你不必实现自己的方案来在每次属性更改时发送通知。其定义良好的基础设施具有框架级支持，这使其易于采用—通常不需要向项目添加任何代码。此外，该基础设施已经具有完整的功能，这使得对单个属性和依赖值支持多个观察器变得很容易。</p>
+<h5 id="注册KVO（Registering-for-Key-Value-Observing）"><a href="#注册KVO（Registering-for-Key-Value-Observing）" class="headerlink" title="注册KVO（Registering for Key-Value Observing）"></a>注册KVO（Registering for Key-Value Observing）</h5><p>你必须执行以下步骤使对象能够接收符合kvo的属性的KVO通知:</p>
+<ol>
+<li>使用<code>addObserver:forKeyPath:options:context:</code>方法将观察者注册到被观察对象。</li>
+<li>在观察者内部实现<code>observeValueForKeyPath:ofObject:change:context:</code>以接受更改通知消息。</li>
+<li>当观察器不再应该接收消息时，使用<code>removeObserver:forKeyPath:</code>方法注销它。至少，在观察者从内存中释放之前调用此方法。</li>
+</ol>
+<h6 id="注册为观察者"><a href="#注册为观察者" class="headerlink" title="注册为观察者"></a>注册为观察者</h6><p>观察对象首先通过由被观察对象发送<code>addObserver:forKeyPath:options:context:</code>消息注册，将自己作为观察者，将要观察的属性的<code>keyPath</code>传递给被观察对象。观察者还指定了一个<code>options</code>参数和一个<code>context</code>指针来管理通知的各个方面。</p>
+<ul>
+<li><code>Options</code>参数</li>
+</ul>
+<p><code>options</code>参数指定为选项常量的位或，它会影响通知中提供的更改字典（<code>changes</code>）的内容，以及生成通知的方式。</p>
+<ol>
+<li><p>通过指定<code>NSKeyValueObservingOptionOld</code>选项，你可以选择从更改之前接收观察到的属性的值。你可以使用选项<code>NSKeyValueObservingOptionNew</code>请求属性的新值。通过这些选项的位或（<code>NSKeyValueObservingOptionOld |NSKeyValueObservingOptionNew </code>），你将同时收到旧值和新值。</p>
+</li>
+<li><p>使用选项<code>NSKeyValueObservingOptionInitial</code>让被观察对象发送一个立即更改通知(在addObserver:forKeyPath:options:context: returns之前)，你可以使用这个附加的一次性通知在观察者中获得属性的初始值。</p>
+</li>
+<li><p>通过包含选项<code>NSKeyValueObservingOptionPrior</code>，你可以指示被观察对象在属性更改之前发送一个通知(除了在更改之后发送通常的通知)。更改字典（<code>changes</code>）通过包含键<code>NSKeyValueChangeNotificationIsPriorKey</code>和包装<code>YES</code>的NSNumber值来表示一个预更改通知。这个<code>key</code>没有出现在其他地方。当观察器自身的KVO遵从性要求它为依赖于被观察属性的某个属性调用<code>-willChange…</code>方法时，可以使用预更改通知。通常的变更后通知来得太晚，无法及时调用<code>willChange…</code>。</p>
+</li>
+</ol>
+<ul>
+<li><code>Context</code>参数</li>
+</ul>
+<p><code>addObserver:forKeyPath:options:context:</code>消息中的<code>context</code>指针包含将在相应的更改通知中传递回观察者的任意数据。你可以指定NULL并完全依赖<code>keyPath</code>字符串来确定更改通知的起源，但是这种方法可能会导致问题——观察者对象的父类（继承链中的任意一个）出于不同的原因监听了相同的<code>keyPath</code>。</p>
+<p>一种更安全、更可扩展的方法是使用<code>context</code>来确保接收到的通知将发送给你的观察者，而不是发送给父类。</p>
+<p>类中唯一命名的静态变量的地址是一个很好的<code>context</code>。在父类或子类中以类似方式选择的上下文不太可能重叠。你可以为整个类选择一个<code>context</code>，并依赖于通知消息中的键路径字符串来确定更改的内容。或者，你可以为每个观察到的键路径创建不同的<code>context</code>，这完全绕过了字符串比较的需要，从而实现更高效的通知解析。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">static void *PersonAccountBalanceContext = &amp;PersonAccountBalanceContext;</span><br><span class="line">static void *PersonAccountInterestRateContext = &amp;PersonAccountInterestRateContext;</span><br><span class="line"></span><br><span class="line">- (void)registerAsObserverForAccount:(Account*)account &#123;</span><br><span class="line">    [account addObserver:self</span><br><span class="line">              forKeyPath:@&quot;balance&quot;</span><br><span class="line">                 options:(NSKeyValueObservingOptionNew |</span><br><span class="line">                          NSKeyValueObservingOptionOld)</span><br><span class="line">                 context:PersonAccountBalanceContext];</span><br><span class="line"> </span><br><span class="line">    [account addObserver:self</span><br><span class="line">              forKeyPath:@&quot;interestRate&quot;</span><br><span class="line">                 options:(NSKeyValueObservingOptionNew |</span><br><span class="line">                          NSKeyValueObservingOptionOld)</span><br><span class="line">                  context:PersonAccountInterestRateContext];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意:KVO的<code>addObserver:forKeyPath:options:context:</code>方法不维护对观察对象、被观察对象或上下文的强引用。你应该确保在必要时保持对观察对象、被观察对象、对象和上下文的强引用。</p>
+<h6 id="接收属性变更通知（Receiving-Notification-of-a-Change）"><a href="#接收属性变更通知（Receiving-Notification-of-a-Change）" class="headerlink" title="接收属性变更通知（Receiving Notification of a Change）"></a>接收属性变更通知（Receiving Notification of a Change）</h6><p>当一个对象的被观察属性的值发生变化时，观察者会收到一个<code>observeValueForKeyPath:ofObject:change:context:</code>消息。所有的观察者都必须实现这个方法。</p>
+<p>观察对象提供触发通知的<code>keyPath</code>(本身作为相关对象)、包含关于更改的详细信息的<code>NSDictionary</code>以及在为该<code>keyPath</code>注册观察者时提供的上下文指针。</p>
+<p>更改字典条目<code>NSKeyValueChangeKindKey</code>提供了关于发生的更改类型的信息。如果被观察对象的值发生了变化，<code>NSKeyValueChangeKindKey</code>表项将返回<code>NSKeyValueChangeSetting</code>。根据注册观察者时指定的选项，更改字典中的<code>NSKeyValueChangeOldKey</code>和<code>NSKeyValueChangeNewKey</code>key包含更改之前和更改之后的属性值。如果属性是一个对象，则直接提供值。如果属性是<code>标量</code>或<code>C结构体</code>，则值被包装在<code>NSValue</code>对象中(与KVC一样)。</p>
+<p>如果观察到的属性是一对多关系，变更字典海通过key<code>NSKeyValueChangeKindKey</code>分别返回<code>NSKeyValueChangeInsertion</code>、<code>NSKeyValueChangeRemoval</code>或<code>NSKeyValueChangeReplacement</code>来指示关系中的插入、删除或替换。</p>
+<p>同时，变更字典中的key<code>NSKeyValueChangeIndexesKey</code>对应的是一个<code>NSIndexSet</code>对象，指定关系中发生更改的索引。如果<code>NSKeyValueObservingOptionNew</code>或<code>NSKeyValueObservingOptionOld</code>在观察者注册时被指定为选项，则更改字典中的key<code>NSKeyValueChangeOldKey</code>和<code>NSKeyValueChangeNewKey</code>是包含更改之前和更改之后相关对象的值的数组。</p>
+<p>在任何情况下，当观察者不识别上下文(或者在简单的情况下，任何<code>keyPath</code>)时，应该总是调用父类的实现<code>observeValueForKeyPath:ofObject:change:context:</code>，因为这意味着父类类也注册了通知。</p>
+<p>注意：如果一个通知传播到类层次结构的顶部，NSObject抛出一个<code>NSInternalInconsistencyException</code>，这是一个编程错误:子类未能使用它注册的通知。</p>
+<h6 id="移除观察者对象（Removing-an-Object-as-an-Observer）"><a href="#移除观察者对象（Removing-an-Object-as-an-Observer）" class="headerlink" title="移除观察者对象（Removing an Object as an Observer）"></a>移除观察者对象（Removing an Object as an Observer）</h6><p>通过向被观察对象发送<code>removeObserver:forKeyPath:context:</code>消息，指定<code>观察对象</code>、<code>keyPath</code>和<code>context</code>，可以删除键值观察器。</p>
+<p>在接收到<code>removeObserver:forKeyPath:context:</code>消息后，观察对象将不再接收指定<code>keyPath</code>和<code>对象</code>的<code>observeValueForKeyPath:ofObject:change:context:</code>通知。</p>
+<p>移除观察者时，请记住以下几点:</p>
+<ul>
+<li>如果观察者还没有被注册，请求被移除会导致<code>NSRangeException</code>。你要么调用<code>removeObserver:forKeyPath:context:</code>恰好一次对应的<code>addObserver:forKeyPath:options:context:</code>，或者把<code>removeObserver:forKeyPath:context:</code> 调用放在一个<code>try/catch</code>块中来处理潜在的异常。</li>
+<li>观察者在被释放时不会自动移除自身。被观察对象继续发送通知，而不关心观察者的状态。然而，与任何其他消息一样，发送到已释放对象的更改通知将触发内存访问异常。因此，你要确保观察者在从内存中消失之前删除自己。</li>
+<li>KVO没有提供询问对象是观察者还是被观察者的方法。注意构建代码以避免出现相关的错误。一个典型的模式是在观察者的初始化(例如在<code>init</code>或<code>viewDidLoad</code>中)期间注册为观察者，在释放(通常在dealloc中)期间取消注册，确保正确配对和有序的添加和删除消息，并在从内存中释放观察者之前取消注册。</li>
+</ul>
+<h5 id="注册依赖key（Registering-Dependent-Keys）"><a href="#注册依赖key（Registering-Dependent-Keys）" class="headerlink" title="注册依赖key（Registering Dependent Keys）"></a>注册依赖key（Registering Dependent Keys）</h5><p>在许多情况下，一个属性的值依赖于另一个对象中的一个或多个其他属性的值。如果一个属性的值发生了更改，那么派生属性的值也应该被标记为更改。如何确保为这些依赖属性发布键值观察通知取决于关系的基数。</p>
+<h6 id="一对一关系（To-One-Relationships）"><a href="#一对一关系（To-One-Relationships）" class="headerlink" title="一对一关系（To-One Relationships）"></a>一对一关系（To-One Relationships）</h6><p>要为一对一关系自动触发通知，你应该要么重写<code>keyPathsForValuesAffectingValueForKey:</code>，要么实现一个合适的方法，遵循它定义的注册依赖键的模式。</p>
+<p>例如，一个人的全名取决于他的姓和名。返回全名的方法可以写成如下形式:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- (NSString *)fullName &#123;</span><br><span class="line">    return [NSString stringWithFormat:@&quot;%@ %@&quot;,firstName, lastName];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当<code>firstName</code>或<code>lastName</code>属性发生变化时，必须通知观察<code>fullName</code>属性的观察者，因为它们会影响该属性的值。</p>
+<p>一个解决方案是覆盖<code>keyPathsForValuesAffectingValueForKey:</code>指定一个人的fullName属性依赖于lastName和firstName属性。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">+ (NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key &#123;</span><br><span class="line"> </span><br><span class="line">    NSSet *keyPaths = [super keyPathsForValuesAffectingValueForKey:key];</span><br><span class="line"> </span><br><span class="line">    if ([key isEqualToString:@&quot;fullName&quot;]) &#123;</span><br><span class="line">        NSArray *affectingKeys = @[@&quot;lastName&quot;, @&quot;firstName&quot;];</span><br><span class="line">        keyPaths = [keyPaths setByAddingObjectsFromArray:affectingKeys];</span><br><span class="line">    &#125;</span><br><span class="line">    return keyPaths;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>你的重写通常应该调用父类并返回一个集合，该集合中包含由此操作产生的任何成员(以便不干扰超类中此方法的重写)。</p>
+<p>你还可以通过实现一个遵循命名约定<code>keypathsforvaluesinfluence&lt;Key&gt;</code>的类方法来实现相同的结果，其中<code>&lt;Key&gt;</code>是依赖于值的属性名(首字母大写)。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">+ (NSSet *)keyPathsForValuesAffectingFullName &#123;</span><br><span class="line">    return [NSSet setWithObjects:@&quot;lastName&quot;, @&quot;firstName&quot;, nil];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当你使用<code>category</code>将计算类属性添加到现有类时，你不能覆盖<code>keyPathsForValuesAffectingValueForKey:</code>方法，因为你不能在类别中重写方法。 在这种情况下，实现一个匹配的<code>keyPathsForValuesAffecting&lt;Key&gt;</code>类方法来利用这个机制。</p>
+<h6 id="一对多关系（To-Many-Relationships）"><a href="#一对多关系（To-Many-Relationships）" class="headerlink" title="一对多关系（To-Many Relationships）"></a>一对多关系（To-Many Relationships）</h6><p><code>keyPathsForValuesAffectingValueForKey:</code>方法不支持包含一多对关系的keyPath。例如，假设你有一个<code>Department</code>对象，它与<code>Employee</code>有一对多的关系(<code>employees</code>)，而<code>Employee</code>有一个<code>salary</code>属性。你可能希望<code>Department</code>对象具有一个<code>totalSalary</code>属性，该属性依赖于关系中所有<code>employee</code>的<code>salary</code>。你不能这样做：在<code>keyPathsForValuesAffectingTotalSalary</code>方法中返回<code>employees.salary</code>作为<code>keyPath</code>。</p>
+<p>在这种情况下，你可以使用<code>KVO</code>来将父节点(在本例中为Department)注册为所有子节点(在本例中为Employees)相关属性的观察者。当向关系中添加和从关系中删除子对象时，必须将父对象作为观察者添加和删除。在<code>observeValueForKeyPath:ofObject:change:context:</code>方法中，更新相关值以响应更改，如下面的代码片段所示:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context &#123;</span><br><span class="line">    if (context == totalSalaryContext) &#123;</span><br><span class="line">        [self updateTotalSalary];</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      [super observeValueForKeyPath:keyPath ofObject:object change:change context:context]; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line">- (void)updateTotalSalary &#123;</span><br><span class="line">    [self setTotalSalary:[self valueForKeyPath:@&quot;employees.@sum.salary&quot;]];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS%E5%BC%80%E5%8F%91/" rel="tag"><i class="fa fa-tag"></i> iOS开发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2022/09/14/KVC/" rel="next" title="KVC">
+                <i class="fa fa-chevron-left"></i> KVC
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2022/09/30/cocoapods-errors/" rel="prev" title="cocoapods报错笔记">
+                cocoapods报错笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%B3%A8%E5%86%8CKVO%EF%BC%88Registering-for-Key-Value-Observing%EF%BC%89"><span class="nav-number">1.</span> <span class="nav-text">注册KVO（Registering for Key-Value Observing）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%BA%E8%A7%82%E5%AF%9F%E8%80%85"><span class="nav-number">1.1.</span> <span class="nav-text">注册为观察者</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%8E%A5%E6%94%B6%E5%B1%9E%E6%80%A7%E5%8F%98%E6%9B%B4%E9%80%9A%E7%9F%A5%EF%BC%88Receiving-Notification-of-a-Change%EF%BC%89"><span class="nav-number">1.2.</span> <span class="nav-text">接收属性变更通知（Receiving Notification of a Change）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4%E8%A7%82%E5%AF%9F%E8%80%85%E5%AF%B9%E8%B1%A1%EF%BC%88Removing-an-Object-as-an-Observer%EF%BC%89"><span class="nav-number">1.3.</span> <span class="nav-text">移除观察者对象（Removing an Object as an Observer）</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E4%BE%9D%E8%B5%96key%EF%BC%88Registering-Dependent-Keys%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">注册依赖key（Registering Dependent Keys）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E4%B8%80%E5%AF%B9%E4%B8%80%E5%85%B3%E7%B3%BB%EF%BC%88To-One-Relationships%EF%BC%89"><span class="nav-number">2.1.</span> <span class="nav-text">一对一关系（To-One Relationships）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E4%B8%80%E5%AF%B9%E5%A4%9A%E5%85%B3%E7%B3%BB%EF%BC%88To-Many-Relationships%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">一对多关系（To-Many Relationships）</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">55.5k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
