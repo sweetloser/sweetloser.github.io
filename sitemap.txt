@@ -1,3 +1,4 @@
+https://www.sweetloser.com/2024/03/12/%E7%BC%96%E8%AF%91llvm%E6%BA%90%E7%A0%81/
 https://www.sweetloser.com/2024/02/28/%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/
 https://www.sweetloser.com/2024/02/28/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/
 https://www.sweetloser.com/2024/02/27/%E5%B8%8C%E5%B0%94%E6%8E%92%E5%BA%8F/
@@ -55,6 +56,7 @@ https://www.sweetloser.com/tags/%E7%94%9F%E6%B4%BB/
 https://www.sweetloser.com/tags/%E7%AE%97%E6%B3%95/
 https://www.sweetloser.com/tags/C/
 https://www.sweetloser.com/tags/iOS/
+https://www.sweetloser.com/tags/LLVM/
 https://www.sweetloser.com/categories/iOS/
 https://www.sweetloser.com/categories/Mac/
 https://www.sweetloser.com/categories/ARM/
@@ -62,3 +64,4 @@ https://www.sweetloser.com/categories/git/
 https://www.sweetloser.com/categories/%E7%94%9F%E6%B4%BB/
 https://www.sweetloser.com/categories/%E7%AE%97%E6%B3%95/
 https://www.sweetloser.com/categories/C/
+https://www.sweetloser.com/categories/LLVM/
