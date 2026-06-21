@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Sample App iOS 测试版</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #191b1f;
+      --muted: #68707d;
+      --line: #dce1e8;
+      --accent: #7a4b0f;
+      --disabled: #9aa3af;
+      --warning-bg: #fff8e5;
+      --warning-text: #744b00;
+      --shadow: 0 18px 48px rgba(20, 24, 31, .08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101214;
+        --panel: #181b1f;
+        --text: #f4f6f8;
+        --muted: #a8b0bc;
+        --line: #303641;
+        --accent: #d8a03f;
+        --disabled: #58606b;
+        --warning-bg: #312816;
+        --warning-text: #ffd98a;
+        --shadow: 0 18px 48px rgba(0, 0, 0, .28);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.58;
+      padding: max(24px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(560px, 100%);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+    }
+
+    .head {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .icon {
+      width: 76px;
+      height: 76px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #7a4b0f, #0f7a5f);
+      color: white;
+      font-size: 27px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 25px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 9px 14px;
+      margin: 20px 0;
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    dt {
+      color: var(--muted);
+    }
+
+    dd {
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .notes {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .install {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--disabled);
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: not-allowed;
+    }
+
+    .tips {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      font-size: 14px;
+    }
+
+    .tips p {
+      margin: 0;
+    }
+
+    .tips p + p {
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel" aria-labelledby="app-title">
+      <div class="head">
+        <div class="icon" aria-hidden="true">SA</div>
+        <div>
+          <h1 id="app-title">Sample App</h1>
+          <p class="subtitle">iOS Ad Hoc 测试版</p>
+        </div>
+      </div>
+
+      <dl>
+        <dt>版本</dt>
+        <dd>1.0.0</dd>
+        <dt>Build</dt>
+        <dd>1</dd>
+        <dt>大小</dt>
+        <dd>未绑定 IPA</dd>
+        <dt>更新时间</dt>
+        <dd>2026-06-21 16:55:00</dd>
+      </dl>
+
+      <p class="notes">这是用于验证博客静态分发路径的示例版本。替换为真实 IPA 地址后，再启用安装按钮。</p>
+
+      <span class="install" aria-disabled="true">示例版本未启用安装</span>
+
+      <div class="tips">
+        <p>请使用 iPhone 或 iPad 的 Safari 打开真实安装页。</p>
+        <p>发布真实版本时，需要将 manifest 中的 IPA 地址替换为可访问的 HTTPS 下载地址。</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

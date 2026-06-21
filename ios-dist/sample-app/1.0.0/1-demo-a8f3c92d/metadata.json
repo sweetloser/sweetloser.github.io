@@ -1,0 +1,13 @@
+{
+  "appName": "Sample App",
+  "bundleId": "com.example.sample",
+  "version": "1.0.0",
+  "buildNumber": "1",
+  "fileSize": "未绑定 IPA",
+  "updatedAt": "2026-06-21 16:55:00",
+  "status": "disabled-template",
+  "installUrl": "https://sweetloser.com/ios-dist/sample-app/1.0.0/1-demo-a8f3c92d/install.html",
+  "manifestUrl": "https://sweetloser.com/ios-dist/sample-app/1.0.0/1-demo-a8f3c92d/manifest.plist",
+  "ipaUrl": "",
+  "releaseNote": "这是用于验证博客静态分发路径的示例版本。替换为真实 IPA 地址后，再启用安装按钮。"
+}

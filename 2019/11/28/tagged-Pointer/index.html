@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS开发," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="问题来源在最近的一次面试过程中，被问到Apple对tagged pointer的优化的问题，当时一脸懵逼，除了说上一句“提高访问效率和节约内存成本”，就没有然后了，被问及其实现原理一概不知。一时陷入尴尬，不知道对话该怎么继续。词穷的原因，大概是因为我的无知吧！所以过后，赶紧补上这方面的知识！ 探索历程1、百度既然打算掌握tagged pointer的相关知识，肯定要知道它是什么，干什么用的，怎么实">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tagged Pointer">
+<meta property="og:url" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="问题来源在最近的一次面试过程中，被问到Apple对tagged pointer的优化的问题，当时一脸懵逼，除了说上一句“提高访问效率和节约内存成本”，就没有然后了，被问及其实现原理一概不知。一时陷入尴尬，不知道对话该怎么继续。词穷的原因，大概是因为我的无知吧！所以过后，赶紧补上这方面的知识！ 探索历程1、百度既然打算掌握tagged pointer的相关知识，肯定要知道它是什么，干什么用的，怎么实">
+<meta property="og:locale">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/1.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/2.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/3.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/4.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/5.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/6.png">
+<meta property="og:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/7.png">
+<meta property="article:published_time" content="2019-11-28T07:51:58.000Z">
+<meta property="article:modified_time" content="2026-06-21T08:19:39.364Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.sweetloser.com/2019/11/28/tagged-Pointer/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2019/11/28/tagged-Pointer/"/>
+
+
+
+
+
+  <title>tagged Pointer | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2019/11/28/tagged-Pointer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">tagged Pointer</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-11-28T15:51:58+08:00">
+                2019-11-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/11/28/tagged-Pointer/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/11/28/tagged-Pointer/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  5.9k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  29 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="问题来源"><a href="#问题来源" class="headerlink" title="问题来源"></a>问题来源</h1><p>在最近的一次面试过程中，被问到Apple对<code>tagged pointer</code>的优化的问题，当时一脸懵逼，除了说上一句“提高访问效率和节约内存成本”，就没有然后了，被问及其实现原理一概不知。一时陷入尴尬，不知道对话该怎么继续。词穷的原因，大概是因为我的无知吧！所以过后，赶紧补上这方面的知识！</p>
+<h1 id="探索历程"><a href="#探索历程" class="headerlink" title="探索历程"></a>探索历程</h1><h2 id="1、百度"><a href="#1、百度" class="headerlink" title="1、百度"></a>1、百度</h2><p>既然打算掌握<code>tagged pointer</code>的相关知识，肯定要知道它是什么，干什么用的，怎么实现的，优势&amp;劣势等等。一大堆的问题，将我湮灭，还好，我有<a target="_blank" rel="noopener" href="http://www.baidu.com/s?wd=taggedpointer">度娘</a>。<br>so…<br><img src="/2019/11/28/tagged-Pointer/1.png" alt="百度.png"><br>一看这么多，求知欲爆棚的我瞬间高潮了，内心简直。。。。。无法用言语形容。尝试着阅读了几篇，发现解释的都很片面和肤浅，和我想要的相差甚远。有点小失落。但是，我可是“好好学习天天向上”的好学生，祖国的花朵，共产主义的接班人啊，怎能轻言放弃呢。于是继续在一堆优（垃）秀（圾）中追求真理。。。</p>
+<p>皇天不负有心人。<br><img src="/2019/11/28/tagged-Pointer/2.png" alt="image.png"><br>看到唐巧大佬也有过这方面的研究。嗯嗯，看来我和大佬之间，就差一个<code>tagged pointer</code>的掌握！！！（窃喜&amp;YY自己正走在成为大佬的路上.png）<br>点开<a target="_blank" rel="noopener" href="http://blog.devtang.com/2014/05/30/understand-tagged-pointer">大佬博客</a>，似乎好像，大佬对<code>tagged pointer</code>也没有太多的解析，让读者知其大概。顿时陷入了迷茫和思考：我想要的仅仅是这些表面的知其然而不知其所以然的所谓的知识吗？脑海中闪过无数鸡汤，瞬间顿悟：去吧皮卡丘，追寻你想要的吧！</p>
+<hr>
+<h2 id="2、Developer-Documention"><a href="#2、Developer-Documention" class="headerlink" title="2、Developer Documention"></a>2、Developer Documention</h2><p>干劲是有了，那从哪里入手呢，怎么去学习<code>tagged pointer</code>呢。这时，我想到了官方文档，于是打开xcode，<code>Help</code>–&gt;<code>Developer Documention</code>，搜索<code>Tagged Pointer</code>:<br><img src="/2019/11/28/tagged-Pointer/3.png" alt="image.png"><br>WTF….<br>内心一万头草泥马奔腾而过~~~<br>后来想想，感觉自己好傻逼，<code>Developer Documention</code>是开发者接口文档，tagged pointer又不是接口，是Apple对NSString、NSNumber、NSDate等类的优化。优化。优化。额，，好像哪里不对，优化不是底层实现的吗，探索底层，不应该去看<code>runtime</code>吗。诶，终究还是太年轻，为什么现在才想起来要看runtime，看来共产主义迟迟不让你接班，还是有原因的！！！</p>
+<h2 id="runtime源码"><a href="#runtime源码" class="headerlink" title="runtime源码"></a>runtime源码</h2><p>既然知道了路在何方，就不在迷茫~<br>废话不多说，先去<a target="_blank" rel="noopener" href="https://opensource.apple.com/tarballs/objc4">OpenSource</a>下载一份<code>runtime</code>源码。<br>这里下载一份最新的<code>objc-750</code>。<br>下载完后，我隐隐感觉到，我离掌握<code>Tagged Pointer</code>已经不远了。<br>于是，抑制住激动的心，控制住颤抖的手，点开<code>objc-750</code>源码，好吧，我又迷失在了无尽的头文件中。<br><img src="/2019/11/28/tagged-Pointer/4.png" alt="image.png"><br>这尼玛，Tagged Pointer相关的知识，在哪个头文件？总不能一个个去找吧？你可能觉得我已经在头文件中迷失自我了，我只能说：呵，天真，我可是共产主义的接班人，这就想难道我？<br>于是我点开了文件搜索😎~<br><img src="/2019/11/28/tagged-Pointer/5.png" alt="image.png"><br>这TM也有好几个啊啊啊啊啊啊。没办法，只能再次求助<a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=runtime%20taggedpointer">度娘</a>。<br>一番查找，终于找到了<code>objc-internal.h</code>。(窃喜.jpg)<br>总算进入正题了（进入全神贯注模式.jpg）。<br>开始阅读源码：<br><img src="/2019/11/28/tagged-Pointer/6.png" alt="image.png"><br>这里可以看注释，文件中关于<code>Tagged Pointer</code>的，大概在209行的位置：<br><img src="/2019/11/28/tagged-Pointer/7.png" alt="image.png"><br>所以直接看这里。<br>开始的位置，是对64位系统的判定：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#if __LP64__</span><br><span class="line">#define OBJC_HAVE_TAGGED_POINTERS 1  //如果是64位系统，则定义宏OBJC_HAVE_TAGGED_POINTERS</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+<p>然后下面就对<code>OBJC_HAVE_TAGGED_POINTERS</code>宏进行判定：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#if OBJC_HAVE_TAGGED_POINTERS    //说明tagged pointer只存在于64位系统中，即Apple是在64位系统上用tagged pointer优化NSString等类的。</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>继续往下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">#if __has_feature(objc_fixed_enum)  ||  __cplusplus &gt;= 201103L</span><br><span class="line">enum objc_tag_index_t : uint16_t</span><br><span class="line">#else</span><br><span class="line">typedef uint16_t objc_tag_index_t;</span><br><span class="line">enum</span><br><span class="line">#endif</span><br><span class="line">&#123;</span><br><span class="line">    // 60-bit payloads</span><br><span class="line">    OBJC_TAG_NSAtom            = 0, </span><br><span class="line">    OBJC_TAG_1                 = 1, </span><br><span class="line">    OBJC_TAG_NSString          = 2, </span><br><span class="line">    OBJC_TAG_NSNumber          = 3, </span><br><span class="line">    OBJC_TAG_NSIndexPath       = 4, </span><br><span class="line">    OBJC_TAG_NSManagedObjectID = 5, </span><br><span class="line">    OBJC_TAG_NSDate            = 6,</span><br><span class="line"></span><br><span class="line">    // 60-bit reserved</span><br><span class="line">    OBJC_TAG_RESERVED_7        = 7, </span><br><span class="line"></span><br><span class="line">    // 52-bit payloads</span><br><span class="line">    OBJC_TAG_Photos_1          = 8,</span><br><span class="line">    OBJC_TAG_Photos_2          = 9,</span><br><span class="line">    OBJC_TAG_Photos_3          = 10,</span><br><span class="line">    OBJC_TAG_Photos_4          = 11,</span><br><span class="line">    OBJC_TAG_XPC_1             = 12,</span><br><span class="line">    OBJC_TAG_XPC_2             = 13,</span><br><span class="line">    OBJC_TAG_XPC_3             = 14,</span><br><span class="line">    OBJC_TAG_XPC_4             = 15,</span><br><span class="line"></span><br><span class="line">    OBJC_TAG_First60BitPayload = 0, </span><br><span class="line">    OBJC_TAG_Last60BitPayload  = 6, </span><br><span class="line">    OBJC_TAG_First52BitPayload = 8, </span><br><span class="line">    OBJC_TAG_Last52BitPayload  = 263, </span><br><span class="line"></span><br><span class="line">    OBJC_TAG_RESERVED_264      = 264</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>一看到<code>#if</code> 、<code>#else</code>、<code>#endif</code>，就知道在做判断。<br>看一下具体在判断什么：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">#if __has_feature(objc_fixed_enum)  ||  __cplusplus &gt;= 201103L</span><br><span class="line">/*</span><br><span class="line">  __has_feature(objc_fixed_enum):</span><br><span class="line">__has_feature evaluates to 1 if the feature is both supported by Clang and standardized in the current language standard or 0 if not.</span><br><span class="line">翻译一下就是：__has_feature取值为1如果特性被Clang支持并且被标准化在当前的语言标准中，取值为0如果不是的话。（原谅我耿（垃）直（圾）的翻译！！！）</span><br><span class="line">Use __has_feature(objc_fixed_enum) to determine whether support for fixed underlying types is available in Objective-C.</span><br><span class="line">翻译：用__has_feature(objc_fixed_enum)来决定是否支持固定的基础类型在Objective-C中。（我也不知道在说啥~）</span><br><span class="line">__cplusplus &gt;= 201103L：</span><br><span class="line">C++11或者更新的标准。</span><br><span class="line">*/</span><br><span class="line">enum objc_tag_index_t : uint16_t</span><br><span class="line">/*</span><br><span class="line">定义枚举objc_tag_index_t，枚举类型为：uint16_t</span><br><span class="line">这是c++11之后的特性</span><br><span class="line">*/</span><br><span class="line">#else</span><br><span class="line">typedef uint16_t objc_tag_index_t;</span><br><span class="line">enum</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+<p>下面是一些枚举值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    // 60-bit payloads</span><br><span class="line">    OBJC_TAG_NSAtom            = 0, </span><br><span class="line">    OBJC_TAG_1                 = 1, </span><br><span class="line">    OBJC_TAG_NSString          = 2,   //NSString</span><br><span class="line">    OBJC_TAG_NSNumber          = 3,  //NSNumber</span><br><span class="line">    OBJC_TAG_NSIndexPath       = 4, //NSIndexPath</span><br><span class="line">    OBJC_TAG_NSManagedObjectID = 5, </span><br><span class="line">    OBJC_TAG_NSDate            = 6,//NSDate  </span><br><span class="line"></span><br><span class="line">    // 60-bit reserved</span><br><span class="line">    OBJC_TAG_RESERVED_7        = 7, </span><br><span class="line"></span><br><span class="line">    // 52-bit payloads</span><br><span class="line">    OBJC_TAG_Photos_1          = 8,</span><br><span class="line">    OBJC_TAG_Photos_2          = 9,</span><br><span class="line">    OBJC_TAG_Photos_3          = 10,</span><br><span class="line">    OBJC_TAG_Photos_4          = 11,</span><br><span class="line">    OBJC_TAG_XPC_1             = 12,</span><br><span class="line">    OBJC_TAG_XPC_2             = 13,</span><br><span class="line">    OBJC_TAG_XPC_3             = 14,</span><br><span class="line">    OBJC_TAG_XPC_4             = 15,</span><br><span class="line"></span><br><span class="line">    OBJC_TAG_First60BitPayload = 0, </span><br><span class="line">    OBJC_TAG_Last60BitPayload  = 6, </span><br><span class="line">    OBJC_TAG_First52BitPayload = 8, </span><br><span class="line">    OBJC_TAG_Last52BitPayload  = 263, </span><br><span class="line"></span><br><span class="line">    OBJC_TAG_RESERVED_264      = 264</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>接下来，就是一些关于<code>tagged pointer</code>的函数了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">// Returns true if tagged pointers are enabled.</span><br><span class="line">// The other functions below must not be called if tagged pointers are disabled.</span><br><span class="line">static inline bool </span><br><span class="line">_objc_taggedPointersEnabled(void);</span><br><span class="line"></span><br><span class="line">// Register a class for a tagged pointer tag.</span><br><span class="line">// Aborts if the tag is invalid or already in use.</span><br><span class="line">OBJC_EXPORT void</span><br><span class="line">_objc_registerTaggedPointerClass(objc_tag_index_t tag, Class _Nonnull cls)</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line"></span><br><span class="line">// Returns the registered class for the given tag.</span><br><span class="line">// Returns nil if the tag is valid but has no registered class.</span><br><span class="line">// Aborts if the tag is invalid.</span><br><span class="line">OBJC_EXPORT Class _Nullable</span><br><span class="line">_objc_getClassForTag(objc_tag_index_t tag)</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line"></span><br><span class="line">// Create a tagged pointer object with the given tag and payload.</span><br><span class="line">// Assumes the tag is valid.</span><br><span class="line">// Assumes tagged pointers are enabled.</span><br><span class="line">// The payload will be silently truncated to fit.</span><br><span class="line">static inline void * _Nonnull</span><br><span class="line">_objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t payload);</span><br><span class="line"></span><br><span class="line">// Return true if ptr is a tagged pointer object.</span><br><span class="line">// Does not check the validity of ptr&#x27;s class.</span><br><span class="line">static inline bool </span><br><span class="line">_objc_isTaggedPointer(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">// Extract the tag value from the given tagged pointer object.</span><br><span class="line">// Assumes ptr is a valid tagged pointer object.</span><br><span class="line">// Does not check the validity of ptr&#x27;s tag.</span><br><span class="line">static inline objc_tag_index_t </span><br><span class="line">_objc_getTaggedPointerTag(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">// Extract the payload from the given tagged pointer object.</span><br><span class="line">// Assumes ptr is a valid tagged pointer object.</span><br><span class="line">// The payload value is zero-extended.</span><br><span class="line">static inline uintptr_t</span><br><span class="line">_objc_getTaggedPointerValue(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">// Extract the payload from the given tagged pointer object.</span><br><span class="line">// Assumes ptr is a valid tagged pointer object.</span><br><span class="line">// The payload value is sign-extended.</span><br><span class="line">static inline intptr_t</span><br><span class="line">_objc_getTaggedPointerSignedValue(const void * _Nullable ptr);</span><br></pre></td></tr></table></figure>
+<p>中间也有各个函数的注释，还算注释的比较清楚。那我们就根据注释和源码，一个个看其实现吧（下面将声明和实现的代码粘贴到一起）：<br><code>_objc_taggedPointersEnabled </code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">// Returns true if tagged pointers are enabled.</span><br><span class="line">// The other functions below must not be called if tagged pointers are disabled.</span><br><span class="line">/*</span><br><span class="line">翻译：返回true如果tagged pointers 是被允许的。</span><br><span class="line">     下面的其它函数不能被调用如果tagged pointers被禁用。</span><br><span class="line">*/</span><br><span class="line">static inline bool </span><br><span class="line">_objc_taggedPointersEnabled(void);</span><br><span class="line"></span><br><span class="line">static inline bool </span><br><span class="line">_objc_taggedPointersEnabled(void)</span><br><span class="line">&#123;</span><br><span class="line">    extern uintptr_t objc_debug_taggedpointer_mask;</span><br><span class="line">    //引入一个外部变量 objc_debug_taggedpointer_mask</span><br><span class="line">    return (objc_debug_taggedpointer_mask != 0);</span><br><span class="line">  //如果objc_debug_taggedpointer_mask为为0，则返回flase,否则返回true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数的实现其实很简单，关键是<code>objc_debug_taggedpointer_mask</code>，这是个什么东西？<br>它既然被<code>extern</code>引入，说明他在其他文件中肯定被定义并初始化过。so，找到它。<br>在<code>objc-gdb.h</code>中找到了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">OBJC_EXPORT uintptr_t objc_debug_taggedpointer_mask</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line"></span><br><span class="line">//这里用OBJC_EXPORT导出objc_debug_taggedpointer_mask。</span><br><span class="line">//OBJC_EXPORT的定义为：</span><br><span class="line"></span><br><span class="line">#if !defined(OBJC_EXPORT)</span><br><span class="line">#   define OBJC_EXPORT  OBJC_EXTERN OBJC_VISIBLE</span><br><span class="line"></span><br><span class="line">//而OBJC_EXTERN的定义为：</span><br><span class="line"></span><br><span class="line">#if !defined(OBJC_EXTERN)</span><br><span class="line">#   if defined(__cplusplus)</span><br><span class="line">#       define OBJC_EXTERN extern &quot;C&quot; </span><br><span class="line">#   else</span><br><span class="line">#       define OBJC_EXTERN extern</span><br><span class="line">#   endif</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">//OBJC_VISIBLE的定义为：</span><br><span class="line">#if !defined(OBJC_VISIBLE)</span><br><span class="line"></span><br><span class="line">#       define OBJC_VISIBLE  __attribute__((visibility(&quot;default&quot;)))</span><br><span class="line"></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">//所以这句相当于：</span><br><span class="line">extern &quot;C&quot; __attribute__((visibility(&quot;default&quot;))) uintptr_t objc_debug_taggedpointer_mask</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line"></span><br><span class="line">//同样的，OBJC_AVAILABLE也可以找到其定义：</span><br><span class="line">/* OBJC_AVAILABLE: shorthand for all-OS availability */</span><br><span class="line"></span><br><span class="line">#if !defined(OBJC_AVAILABLE)</span><br><span class="line">#   define OBJC_AVAILABLE(x, i, t, w, b)                            \</span><br><span class="line">        __OSX_AVAILABLE(x)  __IOS_AVAILABLE(i)  __TVOS_AVAILABLE(t) \</span><br><span class="line">        __WATCHOS_AVAILABLE(w)  __BRIDGEOS_AVAILABLE(b)</span><br><span class="line">#endif</span><br><span class="line">/*可见，OBJC_AVAILABLE将扩展为4个宏，拿__OSX_AVAILABLE来看看吧：*/</span><br><span class="line"></span><br><span class="line">/* for use marking APIs available info for Mac OSX */</span><br><span class="line"></span><br><span class="line">#if defined(__has_attribute)</span><br><span class="line">  #if __has_attribute(availability)</span><br><span class="line">    #define __OSX_UNAVAILABLE                    __OS_AVAILABILITY(macosx,unavailable)</span><br><span class="line">    #define __OSX_AVAILABLE(_vers)               __OS_AVAILABILITY(macosx,introduced=_vers)</span><br><span class="line">    #define __OSX_DEPRECATED(_start, _dep, _msg) __OSX_AVAILABLE(_start) __OS_AVAILABILITY_MSG(macosx,deprecated=_dep,_msg)</span><br><span class="line">  #endif</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">#define __OS_AVAILABILITY(_target, _availability)            __attribute__((availability(_target,_availability)))</span><br><span class="line"></span><br><span class="line">//所以：</span><br><span class="line">#define __OSX_AVAILABLE(x)  __attribute__((availability(macosx,x)))</span><br><span class="line">//其他的也是类似的，这里就不展开多说了。其实主要目的是为了限制版本的。</span><br><span class="line">//关于__attribute__((availability(macosx,x))) ：</span><br><span class="line">/*</span><br><span class="line"></span><br><span class="line">平台，可为macosx, ios, tvos, watchos；</span><br><span class="line">何时引入，introduced=版本；</span><br><span class="line">何时弃用，deprecated=版本；</span><br><span class="line">何时废弃，obsoleted=版本；</span><br><span class="line">不可用，unavailable，标识此平台不可用；</span><br><span class="line">额外信息，message=字符串，可用来额外说明，如提示新的可用的替代方法。</span><br><span class="line">*/</span><br><span class="line">/*所以，OBJC_EXPORT uintptr_t objc_debug_taggedpointer_mask</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line">扩展开来其实是这样的：</span><br><span class="line">*/</span><br><span class="line">extern &quot;C&quot; __attribute__((visibility(&quot;default&quot;))) uintptr_t objc_debug_taggedpointer_mask __attribute__((availability(macosx,introduced=10.9))) __attribute__((availability(ios, introduced=7.0,))) __attribute__((availability(tvos,introduced=9.0))) __attribute__((availability(watchos,introduced=1.0,))) __attribute__((availability(bridgeos,introduced=2.0,))) </span><br><span class="line">    </span><br><span class="line">/*</span><br><span class="line">搞了这么多，各种define套define，搞的花里胡哨的，其实句话主要就是说：</span><br><span class="line">objc_debug_taggedpointer_mask这个符号被导入，可见类型为`default `，且这个符号，分别在macosx10.9、ios7.0、tvos9.0、watchos1.0、bridgeos2.0时被引入的。</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+<p>然而，搞了半天，还是不知道<code>objc_debug_taggedpointer_mask</code>的值啊。<br>所以继续探索。<br>一番寻找之后，终于找到了其赋值的位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">uintptr_t objc_debug_taggedpointer_mask = _OBJC_TAG_MASK;</span><br><span class="line"></span><br><span class="line">#if OBJC_MSB_TAGGED_POINTERS</span><br><span class="line">#   define _OBJC_TAG_MASK (1UL&lt;&lt;63)</span><br><span class="line">#else</span><br><span class="line">#   define _OBJC_TAG_MASK 1UL</span><br><span class="line"></span><br><span class="line">#if (TARGET_OS_OSX || TARGET_OS_IOSMAC) &amp;&amp; __x86_64__</span><br><span class="line">    // 64-bit Mac - tag bit is LSB    </span><br><span class="line">//这里注释的很清楚了，64位的mac，tagged标识位位LSB（最低有效位）</span><br><span class="line">#   define OBJC_MSB_TAGGED_POINTERS 0</span><br><span class="line">#else</span><br><span class="line">    // Everything else - tag bit is MSB</span><br><span class="line">//其他的tagged标识位都为MSB（最高有效位）</span><br><span class="line">#   define OBJC_MSB_TAGGED_POINTERS 1</span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+<p>绕这么一大圈，居然给我说是这个？so interesting！！！<br>回到最最初的那个<code>_objc_taggedPointersEnabled</code>函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">static inline bool </span><br><span class="line">_objc_taggedPointersEnabled(void);</span><br><span class="line"></span><br><span class="line">static inline bool </span><br><span class="line">_objc_taggedPointersEnabled(void)</span><br><span class="line">&#123;</span><br><span class="line">    extern uintptr_t objc_debug_taggedpointer_mask;</span><br><span class="line">    return (objc_debug_taggedpointer_mask != 0);</span><br><span class="line">/*</span><br><span class="line">这里等价于：</span><br><span class="line">if(64bit system)</span><br><span class="line">&#123;</span><br><span class="line">  return true;</span><br><span class="line">&#125;</span><br><span class="line">return flase;</span><br><span class="line">*/</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数算是弄清楚了，接下来看另一个函数。<br><code>_objc_registerTaggedPointerClass</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">OBJC_EXPORT void</span><br><span class="line">_objc_registerTaggedPointerClass(objc_tag_index_t tag, Class _Nonnull cls)</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line">/***********************************************************************</span><br><span class="line">* _objc_registerTaggedPointerClass</span><br><span class="line">* Set the class to use for the given tagged pointer index.</span><br><span class="line">* Aborts if the tag is out of range, or if the tag is already </span><br><span class="line">* used by some other class.</span><br><span class="line">**********************************************************************/</span><br><span class="line">void</span><br><span class="line">_objc_registerTaggedPointerClass(objc_tag_index_t tag, Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    if (objc_debug_taggedpointer_mask == 0) &#123;//首先判断系统是否支持tagged pointer 。objc_debug_taggedpointer_mask=0为tagged pointer disabled；</span><br><span class="line">        _objc_fatal(&quot;tagged pointers are disabled&quot;);</span><br><span class="line">/*</span><br><span class="line">调用_objc_fatal函数。</span><br><span class="line">这是_objc_fatal的实现：</span><br><span class="line">void _objc_fatal(const char *fmt, ...)</span><br><span class="line">&#123;</span><br><span class="line">    va_list args;</span><br><span class="line">    va_start(args, fmt);</span><br><span class="line">    _vcprintf(fmt, args);</span><br><span class="line">    va_end(args);</span><br><span class="line">//通过va_list获取格式化参数，并输出。</span><br><span class="line">    _cprintf(&quot;\n&quot;);</span><br><span class="line"></span><br><span class="line">    abort();</span><br><span class="line">//退出</span><br><span class="line">&#125;</span><br><span class="line">*/</span><br><span class="line">//所以这里的意思就是输出&quot;tagged pointers are disabled&quot;并退出。</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Class *slot = classSlotForTagIndex(tag);</span><br><span class="line">    if (!slot) &#123;</span><br><span class="line">        _objc_fatal(&quot;tag index %u is invalid&quot;, (unsigned int)tag);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Class oldCls = *slot;</span><br><span class="line">    </span><br><span class="line">    if (cls  &amp;&amp;  oldCls  &amp;&amp;  cls != oldCls) &#123;</span><br><span class="line">        _objc_fatal(&quot;tag index %u used for two different classes &quot;</span><br><span class="line">                    &quot;(was %p %s, now %p %s)&quot;, tag, </span><br><span class="line">                    oldCls, oldCls-&gt;nameForLogging(), </span><br><span class="line">                    cls, cls-&gt;nameForLogging());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    *slot = cls;</span><br><span class="line"></span><br><span class="line">    // Store a placeholder class in the basic tag slot that is </span><br><span class="line">    // reserved for the extended tag space, if it isn&#x27;t set already.</span><br><span class="line">    // Do this lazily when the first extended tag is registered so </span><br><span class="line">    // that old debuggers characterize bogus pointers correctly more often.</span><br><span class="line">    if (tag &lt; OBJC_TAG_First60BitPayload || tag &gt; OBJC_TAG_Last60BitPayload) &#123;</span><br><span class="line">        Class *extSlot = classSlotForBasicTagIndex(OBJC_TAG_RESERVED_7);</span><br><span class="line">        if (*extSlot == nil) &#123;</span><br><span class="line">            extern objc_class OBJC_CLASS_$___NSUnrecognizedTaggedPointer;</span><br><span class="line">            *extSlot = (Class)&amp;OBJC_CLASS_$___NSUnrecognizedTaggedPointer;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>继续往下看的话，又遇到一个之前没有看过的函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Class * classSlotForTagIndex(tag);</span><br></pre></td></tr></table></figure>
+<p>在runtime中找到它的实现部分：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">// Returns a pointer to the class&#x27;s storage in the tagged class arrays, </span><br><span class="line">// or nil if the tag is out of range.</span><br><span class="line">/*</span><br><span class="line">注释：返回一个指针给类的存储在tagged class 数组中。</span><br><span class="line">*/</span><br><span class="line">static Class *  </span><br><span class="line">classSlotForTagIndex(objc_tag_index_t tag)</span><br><span class="line">&#123;</span><br><span class="line">    if (tag &gt;= OBJC_TAG_First60BitPayload &amp;&amp; tag &lt;= OBJC_TAG_Last60BitPayload) &#123;</span><br><span class="line">//这里判断tagged pointer的payloads位，是否为60位payloads。</span><br><span class="line">/*</span><br><span class="line">// 60-bit payloads</span><br><span class="line">    OBJC_TAG_NSAtom            = 0, </span><br><span class="line">    OBJC_TAG_1                 = 1, </span><br><span class="line">    OBJC_TAG_NSString          = 2, </span><br><span class="line">    OBJC_TAG_NSNumber          = 3, </span><br><span class="line">    OBJC_TAG_NSIndexPath       = 4, </span><br><span class="line">    OBJC_TAG_NSManagedObjectID = 5, </span><br><span class="line">    OBJC_TAG_NSDate            = 6,</span><br><span class="line">*/</span><br><span class="line">//以上7种类型都为60bit payloads（用60bit来存储数据）</span><br><span class="line">        return classSlotForBasicTagIndex(tag);//调用另一个函数，这里找到它的实现（在下面对其分析）</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (tag &gt;= OBJC_TAG_First52BitPayload &amp;&amp; tag &lt;= OBJC_TAG_Last52BitPayload) &#123;</span><br><span class="line">        int index = tag - OBJC_TAG_First52BitPayload;</span><br><span class="line">        uintptr_t tagObfuscator = ((objc_debug_taggedpointer_obfuscator</span><br><span class="line">                                    &gt;&gt; _OBJC_TAG_EXT_INDEX_SHIFT)</span><br><span class="line">                                   &amp; _OBJC_TAG_EXT_INDEX_MASK);</span><br><span class="line">        return &amp;objc_tag_ext_classes[index ^ tagObfuscator];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return nil;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>分析<code>classSlotForBasicTagIndex</code>函数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">// Returns a pointer to the class&#x27;s storage in the tagged class arrays.</span><br><span class="line">// Assumes the tag is a valid basic tag.假设标志是一个有效的标志（在上层调用中已经判断了tag）</span><br><span class="line">static Class *</span><br><span class="line">classSlotForBasicTagIndex(objc_tag_index_t tag)</span><br><span class="line">&#123;</span><br><span class="line">//这里又出现一个奇怪的变量objc_debug_taggedpointer_obfuscator😞。。。看看他到底是什么东西？</span><br><span class="line">    uintptr_t tagObfuscator = ((objc_debug_taggedpointer_obfuscator</span><br><span class="line">                                &gt;&gt; _OBJC_TAG_INDEX_SHIFT)</span><br><span class="line">                               &amp; _OBJC_TAG_INDEX_MASK);</span><br><span class="line">    uintptr_t obfuscatedTag = tag ^ tagObfuscator;</span><br><span class="line">    // Array index in objc_tag_classes includes the tagged bit itself</span><br><span class="line">#if SUPPORT_MSB_TAGGED_POINTERS</span><br><span class="line">    return &amp;objc_tag_classes[0x8 | obfuscatedTag];</span><br><span class="line">#else</span><br><span class="line">    return &amp;objc_tag_classes[(obfuscatedTag &lt;&lt; 1) | 1];</span><br><span class="line">#endif</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>分析<code>objc_debug_taggedpointer_obfuscator</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">/***********************************************************************</span><br><span class="line">* initializeTaggedPointerObfuscator（初始化initializeTaggedPointerObfuscator）</span><br><span class="line">* Initialize objc_debug_taggedpointer_obfuscator with randomness.（初始化objc_debug_taggedpointer_obfuscator用随机数据）</span><br><span class="line">*</span><br><span class="line">* The tagged pointer obfuscator is intended to make it more difficult</span><br><span class="line">* for an attacker to construct a particular object as a tagged pointer,</span><br><span class="line">* in the presence of a buffer overflow or other write control over some</span><br><span class="line">* memory. The obfuscator is XORed with the tagged pointers when setting</span><br><span class="line">* or retrieving payload values. They are filled with randomness on first</span><br><span class="line">* use.</span><br><span class="line">**********************************************************************/</span><br><span class="line">static void</span><br><span class="line">initializeTaggedPointerObfuscator(void)</span><br><span class="line">&#123;</span><br><span class="line">    if (sdkIsOlderThan(10_14, 12_0, 12_0, 5_0, 3_0) ||</span><br><span class="line">        // Set the obfuscator to zero for apps linked against older SDKs,</span><br><span class="line">        // in case they&#x27;re relying on the tagged pointer representation.</span><br><span class="line">        DisableTaggedPointerObfuscation) &#123;</span><br><span class="line">/*</span><br><span class="line">// OPTION(var, env, help)</span><br><span class="line">OPTION( DisableTaggedPointerObfuscation, OBJC_DISABLE_TAG_OBFUSCATION,    &quot;disable obfuscation of tagged pointers&quot;)</span><br><span class="line">*/</span><br><span class="line">/*</span><br><span class="line">#define sdkIsOlderThan(x, i, t, w) (sdkVersion() &lt; DYLD_OS_VERSION(x, i, t, w))</span><br><span class="line">#if TARGET_OS_OSX</span><br><span class="line">#   define DYLD_OS_VERSION(x, i, t, w) DYLD_MACOSX_VERSION_##x</span><br><span class="line">#   define sdkVersion() dyld_get_program_sdk_version()</span><br><span class="line"></span><br><span class="line">#elif TARGET_OS_IOS</span><br><span class="line">#   define DYLD_OS_VERSION(x, i, t, w) DYLD_IOS_VERSION_##i</span><br><span class="line">#   define sdkVersion() dyld_get_program_sdk_version()</span><br><span class="line"></span><br><span class="line">#elif TARGET_OS_TV</span><br><span class="line">    // dyld does not currently have distinct constants for tvOS</span><br><span class="line">#   define DYLD_OS_VERSION(x, i, t, w) DYLD_IOS_VERSION_##t</span><br><span class="line">#   define sdkVersion() dyld_get_program_sdk_version()</span><br><span class="line"></span><br><span class="line">#elif TARGET_OS_WATCH</span><br><span class="line">#   define DYLD_OS_VERSION(x, i, t, w) DYLD_WATCHOS_VERSION_##w</span><br><span class="line">    // watchOS has its own API for compatibility reasons</span><br><span class="line">#   define sdkVersion() dyld_get_program_sdk_watch_os_version()</span><br><span class="line"></span><br><span class="line">#else</span><br><span class="line">#   error unknown OS</span><br><span class="line">#endif</span><br><span class="line">*/</span><br><span class="line">        objc_debug_taggedpointer_obfuscator = 0;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line"></span><br><span class="line">        // Pull random data into the variable, then shift away all non-payload bits.（将随机数据放入变量中，然后移走所有非有效负载位。）</span><br><span class="line">        arc4random_buf(&amp;objc_debug_taggedpointer_obfuscator,</span><br><span class="line">                       sizeof(objc_debug_taggedpointer_obfuscator));</span><br><span class="line">    //arc4random_buf() fills the region buf of length nbytes with random data.</span><br><span class="line"></span><br><span class="line">        objc_debug_taggedpointer_obfuscator &amp;= ~_OBJC_TAG_MASK;</span><br><span class="line">//获取一个随机数，并将该随机数的tagged pointer 标识位（高1bit或者低1bit）置为0。即：</span><br><span class="line">//objc_debug_taggedpointer_obfuscator = objc_debug_taggedpointer_obfuscator &amp; (0x7FFFFFFFFFFFFFFF或者0xFFFFFFFFFFFFFFFE)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>objc_debug_taggedpointer_obfuscator </code>也算是囫囵吞枣掌握了，回到刚刚那个<code>classSlotForBasicTagIndex </code>函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">static Class *</span><br><span class="line">classSlotForBasicTagIndex(objc_tag_index_t tag)</span><br><span class="line">&#123;</span><br><span class="line">    uintptr_t tagObfuscator = ((objc_debug_taggedpointer_obfuscator</span><br><span class="line">                                &gt;&gt; _OBJC_TAG_INDEX_SHIFT)</span><br><span class="line">                               &amp; _OBJC_TAG_INDEX_MASK);</span><br><span class="line">//这里就很好理解了，将随机得到的数据（tagged标识位已置0）右移_OBJC_TAG_INDEX_SHIFT位。</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">#if OBJC_MSB_TAGGED_POINTERS</span><br><span class="line">#   define _OBJC_TAG_INDEX_SHIFT 60</span><br><span class="line">#else</span><br><span class="line">#   define _OBJC_TAG_INDEX_SHIFT 1</span><br><span class="line">#endif</span><br><span class="line">总是有两种情况，这里就选一种研究（“_OBJC_TAG_INDEX_SHIFT 60”）</span><br><span class="line">右移60位，相当于取随机数objc_debug_taggedpointer_obfuscator的高四位。</span><br><span class="line"></span><br><span class="line">#define _OBJC_TAG_INDEX_MASK 0x7</span><br><span class="line">然后再和0x7进行位与操作。</span><br><span class="line">其实质就是取60bit~62bit。（高4bit中的低3bit）</span><br><span class="line">*/</span><br><span class="line">    uintptr_t obfuscatedTag = tag ^ tagObfuscator;</span><br><span class="line">//tag 和 tagObfuscator 进行异或操作。</span><br><span class="line">    // Array index in objc_tag_classes includes the tagged bit itself</span><br><span class="line">#if SUPPORT_MSB_TAGGED_POINTERS</span><br><span class="line">    return &amp;objc_tag_classes[0x8 | obfuscatedTag];</span><br><span class="line">#else</span><br><span class="line">    return &amp;objc_tag_classes[(obfuscatedTag &lt;&lt; 1) | 1];</span><br><span class="line">#endif</span><br><span class="line">//将标志位置1，然后在objc_tag_classes数组中取出，再取地址返回。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>回到开始的<code>_objc_registerTaggedPointerClass</code>函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">void</span><br><span class="line">_objc_registerTaggedPointerClass(objc_tag_index_t tag, Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    if (objc_debug_taggedpointer_mask == 0) &#123;</span><br><span class="line">        _objc_fatal(&quot;tagged pointers are disabled&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Class *slot = classSlotForTagIndex(tag);</span><br><span class="line">/*</span><br><span class="line">这里已经知道了，slot是通过tag值，在objc_tag_classes数组中寻找对于的Class，并获取其地址，赋值给slot。</span><br><span class="line">*/</span><br><span class="line">    if (!slot) &#123;</span><br><span class="line">        _objc_fatal(&quot;tag index %u is invalid&quot;, (unsigned int)tag);</span><br><span class="line">    &#125;</span><br><span class="line">//如果没有获取到，则abort并告知tag index is invalid。</span><br><span class="line"></span><br><span class="line">    Class oldCls = *slot;</span><br><span class="line">    </span><br><span class="line">    if (cls  &amp;&amp;  oldCls  &amp;&amp;  cls != oldCls) &#123;</span><br><span class="line">        _objc_fatal(&quot;tag index %u used for two different classes &quot;</span><br><span class="line">                    &quot;(was %p %s, now %p %s)&quot;, tag, </span><br><span class="line">                    oldCls, oldCls-&gt;nameForLogging(), </span><br><span class="line">                    cls, cls-&gt;nameForLogging());</span><br><span class="line">    &#125;</span><br><span class="line">  //这里是判断该tag index是否被其他class使用。</span><br><span class="line"></span><br><span class="line">    *slot = cls;</span><br><span class="line"></span><br><span class="line">//下面的这段，有待探究~~~</span><br><span class="line">    // Store a placeholder class in the basic tag slot that is </span><br><span class="line">    // reserved for the extended tag space, if it isn&#x27;t set already.</span><br><span class="line">    // Do this lazily when the first extended tag is registered so </span><br><span class="line">    // that old debuggers characterize bogus pointers correctly more often.</span><br><span class="line">    if (tag &lt; OBJC_TAG_First60BitPayload || tag &gt; OBJC_TAG_Last60BitPayload) &#123;</span><br><span class="line">        Class *extSlot = classSlotForBasicTagIndex(OBJC_TAG_RESERVED_7);</span><br><span class="line">        if (*extSlot == nil) &#123;</span><br><span class="line">            extern objc_class OBJC_CLASS_$___NSUnrecognizedTaggedPointer;</span><br><span class="line">            *extSlot = (Class)&amp;OBJC_CLASS_$___NSUnrecognizedTaggedPointer;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里，这个函数算是解析完了。其实它做的就是：<br>1、判断tagged pointer disabled与否。<br>2、用tag值在objc_tag_classes数组中查找相对应的Class（查找过程上面已经分析过）。<br>3、判断是否查找到。如果查找到，判断是否被占用。</p>
+<p>下一个函数<code>_objc_getClassForTag </code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">// Returns the registered class for the given tag.</span><br><span class="line">// Returns nil if the tag is valid but has no registered class.</span><br><span class="line">// Aborts if the tag is invalid.</span><br><span class="line">OBJC_EXPORT Class _Nullable</span><br><span class="line">_objc_getClassForTag(objc_tag_index_t tag)</span><br><span class="line">    OBJC_AVAILABLE(10.9, 7.0, 9.0, 1.0, 2.0);</span><br><span class="line"></span><br><span class="line">/***********************************************************************</span><br><span class="line">* _objc_getClassForTag</span><br><span class="line">* Returns the class that is using the given tagged pointer tag.</span><br><span class="line">* Returns nil if no class is using that tag or the tag is out of range.</span><br><span class="line">**********************************************************************/</span><br><span class="line">Class</span><br><span class="line">_objc_getClassForTag(objc_tag_index_t tag)</span><br><span class="line">&#123;</span><br><span class="line">    Class *slot = classSlotForTagIndex(tag);</span><br><span class="line">    if (slot) return *slot;</span><br><span class="line">    else return nil;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>嘿，巧了，<code>classSlotForTagIndex</code>函数，在分析上个函数的时候，分析过了。详细过程见<code>classSlotForBasicTagIndex </code>函数的分析过程。</p>
+<p>下一个函数<code>_objc_makeTaggedPointer</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">// Create a tagged pointer object with the given tag and payload.</span><br><span class="line">// Assumes the tag is valid.</span><br><span class="line">// Assumes tagged pointers are enabled.</span><br><span class="line">// The payload will be silently truncated to fit.</span><br><span class="line">static inline void * _Nonnull</span><br><span class="line">_objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t payload);</span><br><span class="line"></span><br><span class="line">static inline void * _Nonnull</span><br><span class="line">_objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t value)</span><br><span class="line">&#123;</span><br><span class="line">    // PAYLOAD_LSHIFT and PAYLOAD_RSHIFT are the payload extraction shifts.</span><br><span class="line">    // They are reversed here for payload insertion.</span><br><span class="line"></span><br><span class="line">    // assert(_objc_taggedPointersEnabled());</span><br><span class="line">    if (tag &lt;= OBJC_TAG_Last60BitPayload) &#123;</span><br><span class="line">//这里只分析这种情况</span><br><span class="line">        // assert(((value &lt;&lt; _OBJC_TAG_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_LSHIFT) == value);</span><br><span class="line">        uintptr_t result =</span><br><span class="line">            (_OBJC_TAG_MASK | </span><br><span class="line">             ((uintptr_t)tag &lt;&lt; _OBJC_TAG_INDEX_SHIFT) | </span><br><span class="line">             ((value &lt;&lt; _OBJC_TAG_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_LSHIFT));</span><br><span class="line">        return _objc_encodeTaggedPointer(result);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        // assert(tag &gt;= OBJC_TAG_First52BitPayload);</span><br><span class="line">        // assert(tag &lt;= OBJC_TAG_Last52BitPayload);</span><br><span class="line">        // assert(((value &lt;&lt; _OBJC_TAG_EXT_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_EXT_PAYLOAD_LSHIFT) == value);</span><br><span class="line">        uintptr_t result =</span><br><span class="line">            (_OBJC_TAG_EXT_MASK |</span><br><span class="line">             ((uintptr_t)(tag - OBJC_TAG_First52BitPayload) &lt;&lt; _OBJC_TAG_EXT_INDEX_SHIFT) |</span><br><span class="line">             ((value &lt;&lt; _OBJC_TAG_EXT_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_EXT_PAYLOAD_LSHIFT));</span><br><span class="line">        return _objc_encodeTaggedPointer(result);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>先分析<code>result</code>的值:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">uintptr_t result = (_OBJC_TAG_MASK |  ((uintptr_t)tag &lt;&lt; _OBJC_TAG_INDEX_SHIFT) | ((value &lt;&lt; _OBJC_TAG_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_LSHIFT));</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">同样的，这里只分析 _OBJC_TAG_INDEX_SHIFT = 60 的情况</span><br><span class="line">((uintptr_t)tag &lt;&lt; _OBJC_TAG_INDEX_SHIFT) ：将tag的低4bit变为高4bit</span><br><span class="line">((value &lt;&lt; _OBJC_TAG_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_LSHIFT)：将value的高4bit置0</span><br><span class="line">((uintptr_t)tag &lt;&lt; _OBJC_TAG_INDEX_SHIFT) | ((value &lt;&lt; _OBJC_TAG_PAYLOAD_RSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_LSHIFT)：将tag的低四位给value的高四位。</span><br><span class="line">上面的操作就相当于：</span><br><span class="line">tag:0x89abcdef</span><br><span class="line">value:0x76543210</span><br><span class="line">tagvalue:0xf6543210</span><br><span class="line"></span><br><span class="line">所以result为上述操作之后的tag和value值的tagged pointer标识位（63bit）置1。</span><br><span class="line">举个例子：</span><br><span class="line">tag=0x76543210</span><br><span class="line">value=0xf9abcdef</span><br><span class="line">那么result=(1&lt;&lt;63) | ((tag&lt;&lt;60) | ((value&lt;&lt;4)&gt;&gt;4)) = 0x89abcdef</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+<p>再来看看<code>_objc_encodeTaggedPointer </code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">static inline void * _Nonnull</span><br><span class="line">_objc_encodeTaggedPointer(uintptr_t ptr)</span><br><span class="line">&#123;</span><br><span class="line">    return (void *)(objc_debug_taggedpointer_obfuscator ^ ptr);</span><br><span class="line">/*</span><br><span class="line">objc_debug_taggedpointer_obfuscator在上面也是分析过的，他有一个初始化函数initializeTaggedPointerObfuscator。</span><br><span class="line">其值为一个由arc4random_buf生成的64bit随机数，然后再将_OBJC_TAG_MASK位（最高位）置0。</span><br><span class="line">所以的得到的为：result^objc_debug_taggedpointer_obfuscator</span><br><span class="line">*/</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看下一个函数<code>_objc_isTaggedPointer</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// Return true if ptr is a tagged pointer object.</span><br><span class="line">// Does not check the validity of ptr&#x27;s class.</span><br><span class="line">static inline bool </span><br><span class="line">_objc_isTaggedPointer(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">static inline bool </span><br><span class="line">_objc_isTaggedPointer(const void * _Nullable ptr)</span><br><span class="line">&#123;</span><br><span class="line">    return ((uintptr_t)ptr &amp; _OBJC_TAG_MASK) == _OBJC_TAG_MASK;</span><br><span class="line">/*</span><br><span class="line">这个其实很简单，传入一个指针，判断指针的_OBJC_TAG_MASK位是否为1。</span><br><span class="line">*/</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>_objc_getTaggedPointerTag</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">// Extract the tag value from the given tagged pointer object.</span><br><span class="line">// Assumes ptr is a valid tagged pointer object.</span><br><span class="line">// Does not check the validity of ptr&#x27;s tag.</span><br><span class="line">static inline objc_tag_index_t </span><br><span class="line">_objc_getTaggedPointerTag(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">static inline objc_tag_index_t </span><br><span class="line">_objc_getTaggedPointerTag(const void * _Nullable ptr) </span><br><span class="line">&#123;</span><br><span class="line">    // assert(_objc_isTaggedPointer(ptr));</span><br><span class="line">    uintptr_t value = _objc_decodeTaggedPointer(ptr);</span><br><span class="line">/*</span><br><span class="line">用随机数objc_debug_taggedpointer_obfuscator对指针进行decode。</span><br><span class="line">*/</span><br><span class="line">    uintptr_t basicTag = (value &gt;&gt; _OBJC_TAG_INDEX_SHIFT) &amp; _OBJC_TAG_INDEX_MASK;</span><br><span class="line">//    uintptr_t basicTag = (value &gt;&gt; 60) &amp; 0x7;//将decode之后的value的高四位变为低四位，并将其3bit置为0。</span><br><span class="line"></span><br><span class="line">//仅是研究NSNumber等类的话，下面的就不用去深究。</span><br><span class="line">    uintptr_t extTag =   (value &gt;&gt; _OBJC_TAG_EXT_INDEX_SHIFT) &amp; _OBJC_TAG_EXT_INDEX_MASK;</span><br><span class="line"></span><br><span class="line">    if (basicTag == _OBJC_TAG_INDEX_MASK) &#123;</span><br><span class="line">        return (objc_tag_index_t)(extTag + OBJC_TAG_First52BitPayload);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return (objc_tag_index_t)basicTag;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>_objc_getTaggedPointerValue</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">// Extract the payload from the given tagged pointer object.</span><br><span class="line">// Assumes ptr is a valid tagged pointer object.</span><br><span class="line">// The payload value is zero-extended.</span><br><span class="line">static inline uintptr_t</span><br><span class="line">_objc_getTaggedPointerValue(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">static inline uintptr_t</span><br><span class="line">_objc_getTaggedPointerValue(const void * _Nullable ptr) </span><br><span class="line">&#123;</span><br><span class="line">    // assert(_objc_isTaggedPointer(ptr));</span><br><span class="line">    uintptr_t value = _objc_decodeTaggedPointer(ptr);</span><br><span class="line">    uintptr_t basicTag = (value &gt;&gt; _OBJC_TAG_INDEX_SHIFT) &amp; _OBJC_TAG_INDEX_MASK;</span><br><span class="line">    if (basicTag == _OBJC_TAG_INDEX_MASK) &#123;</span><br><span class="line">        return (value &lt;&lt; _OBJC_TAG_EXT_PAYLOAD_LSHIFT) &gt;&gt; _OBJC_TAG_EXT_PAYLOAD_RSHIFT;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return (value &lt;&lt; _OBJC_TAG_PAYLOAD_LSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_RSHIFT;</span><br><span class="line">//主要看这里，value的值是_objc_decodeTaggedPointer的返回值，然后再将这个返回值高四位置0，即得。</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>_objc_getTaggedPointerSignedValue</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">// Extract the payload from the given tagged pointer object.</span><br><span class="line">// Assumes ptr is a valid tagged pointer object.</span><br><span class="line">// The payload value is sign-extended.</span><br><span class="line">static inline intptr_t</span><br><span class="line">_objc_getTaggedPointerSignedValue(const void * _Nullable ptr);</span><br><span class="line"></span><br><span class="line">static inline intptr_t</span><br><span class="line">_objc_getTaggedPointerSignedValue(const void * _Nullable ptr) </span><br><span class="line">&#123;</span><br><span class="line">    // assert(_objc_isTaggedPointer(ptr));</span><br><span class="line">    uintptr_t value = _objc_decodeTaggedPointer(ptr);</span><br><span class="line">    uintptr_t basicTag = (value &gt;&gt; _OBJC_TAG_INDEX_SHIFT) &amp; _OBJC_TAG_INDEX_MASK;</span><br><span class="line">    if (basicTag == _OBJC_TAG_INDEX_MASK) &#123;</span><br><span class="line">        return ((intptr_t)value &lt;&lt; _OBJC_TAG_EXT_PAYLOAD_LSHIFT) &gt;&gt; _OBJC_TAG_EXT_PAYLOAD_RSHIFT;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return ((intptr_t)value &lt;&lt; _OBJC_TAG_PAYLOAD_LSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_RSHIFT;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">/*</span><br><span class="line">这个函数和上面的_objc_getTaggedPointerValue是一样的。</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+<p>理论到这算是走完了。<br>这里，总结一下：<br>tagged pointer是Apple在64bit系统上对NSNumber类的一些优化，主要目的是为了节省内存。其实现原理为：将指针的一部分（4bit）拿出来充当tag值，标记对象指针是否为tagged pointer。并在这4bit中，还存储了该指针的所属类在objc_tag_classes数组中的index。通过一系列函数可以对其进行操作，例如判断指针是否为tagged pointer（_objc_isTaggedPointer）、获取tagged pointer的数据（_objc_getTaggedPointerValue）、获取tagged pointer的类型（_objc_getTaggedPointerTag）等等。</p>
+<h3 id="实践（环境：MAC，版本：10-14-5）"><a href="#实践（环境：MAC，版本：10-14-5）" class="headerlink" title="实践（环境：MAC，版本：10.14.5）"></a>实践（环境：MAC，版本：10.14.5）</h3><p>理论搞懂了，那就来指导一下实践吧：</p>
+<ul>
+<li>1 由已知tagged pointer 获取其相关信息。<br>（1）查看tagged pointer enable or disable。<br>根据上述分析，判断pagged pointer是否启用，应该是调用函数<code>_objc_taggedPointersEnabled</code>。<br>但是<code>_objc_taggedPointersEnabled</code>函数是被<code>static</code>修饰的，所以不能<code>extern</code>并使用。只能直接重写其实现。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">#import &lt;Foundation/Foundation.h&gt;</span><br><span class="line"></span><br><span class="line">bool sl_objc_taggedPointersEnabled(void)</span><br><span class="line">&#123;</span><br><span class="line">    extern uintptr_t objc_debug_taggedpointer_mask;</span><br><span class="line">    return (objc_debug_taggedpointer_mask != 0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        </span><br><span class="line">        bool b = sl_objc_taggedPointersEnabled();</span><br><span class="line">        NSLog(@&quot;Enable:%d&quot;,b);</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+查看打印：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2019-07-01 17:37:14.584230+0800 AAA[10865:711050] Enable:1</span><br></pre></td></tr></table></figure>
+可知，在mac10.14.5上，是enabled的。<br>（2）判断一个指针是不是Tagged Pointer。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">#   define _OBJC_TAG_MASK 1UL//本来需要判断的，这里测试的是已知的mac 10.14.5.所以直接定义</span><br><span class="line">bool sl_objc_isTaggedPointer(const void * _Nullable ptr)</span><br><span class="line">&#123;</span><br><span class="line">    return ((uintptr_t)ptr &amp; _OBJC_TAG_MASK) == _OBJC_TAG_MASK;</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        NSNumber *n = @123;</span><br><span class="line">        NSString *s = @&quot;123&quot;;</span><br><span class="line">        NSString *s_m_c = [[s mutableCopy] copy];</span><br><span class="line">        NSObject *o = [NSObject new];</span><br><span class="line">        bool nb = sl_objc_isTaggedPointer((__bridge void *)n);</span><br><span class="line">        bool sb = sl_objc_isTaggedPointer((__bridge void *)s);</span><br><span class="line">        bool smcb = sl_objc_isTaggedPointer((__bridge void *)s_m_c);</span><br><span class="line">        bool ob = sl_objc_isTaggedPointer((__bridge void *)o);</span><br><span class="line">        NSLog(@&quot;nb(0x%lx) is TaggedPointer %d&quot;,(uintptr_t)n,nb);</span><br><span class="line">        NSLog(@&quot;sb(0x%lx) is TaggedPointer %d&quot;,(uintptr_t)s,sb);</span><br><span class="line">        NSLog(@&quot;smcb(0x%lx) is TaggedPointer %d&quot;,(uintptr_t)s_m_c,smcb);</span><br><span class="line">        NSLog(@&quot;ob(0x%lx) is TaggedPointer %d&quot;,(uintptr_t)o,ob);</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+打印：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2019-07-01 17:58:36.116391+0800 AAA[10973:719191] nb(0x56b19f9c2784f641) is TaggedPointer 1</span><br><span class="line">2019-07-01 17:58:36.116530+0800 AAA[10973:719191] sb(0x100001058) is TaggedPointer 0</span><br><span class="line">2019-07-01 17:58:36.116538+0800 AAA[10973:719191] smcb(0x56b19f9c14b6bc53) is TaggedPointer 1</span><br><span class="line">2019-07-01 17:58:36.116544+0800 AAA[10973:719191] ob(0x10051e520) is TaggedPointer 0</span><br></pre></td></tr></table></figure>
+（3）获取tagged pointer的类型（tag枚举值）<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">#   define _OBJC_TAG_INDEX_SHIFT 1</span><br><span class="line">#define _OBJC_TAG_INDEX_MASK 0x7</span><br><span class="line">extern uintptr_t objc_debug_taggedpointer_obfuscator;</span><br><span class="line">uintptr_t sl_objc_getTaggedPointerTag(const void * _Nullable ptr)</span><br><span class="line">&#123;</span><br><span class="line">    uintptr_t value = objc_debug_taggedpointer_obfuscator ^ (uintptr_t)ptr;</span><br><span class="line">    uintptr_t basicTag = (value &gt;&gt; _OBJC_TAG_INDEX_SHIFT) &amp; _OBJC_TAG_INDEX_MASK;</span><br><span class="line">    return basicTag;</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        NSNumber *n = @123;</span><br><span class="line">        NSString *s = @&quot;123&quot;;</span><br><span class="line">        NSString *s_m_c = [[s mutableCopy] copy];</span><br><span class="line">        uintptr_t n_t = sl_objc_getTaggedPointerTag((__bridge void *)n);</span><br><span class="line">        uintptr_t s_m_c_t = sl_objc_getTaggedPointerTag((__bridge void *)s_m_c);</span><br><span class="line">        NSLog(@&quot;n&#x27;s type is %ld&quot;,n_t);</span><br><span class="line">        NSLog(@&quot;s_m_c&#x27;s type is %ld&quot;,s_m_c_t);        </span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+log：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2019-07-04 09:41:34.017122+0800 AAA[11655:849484] n&#x27;s type is 3</span><br><span class="line">2019-07-04 09:41:34.017318+0800 AAA[11655:849484] s_m_c&#x27;s type is 2</span><br></pre></td></tr></table></figure>
+对比log和objc_tag_index_t：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// 60-bit payloads</span><br><span class="line">    OBJC_TAG_NSAtom            = 0, </span><br><span class="line">    OBJC_TAG_1                 = 1, </span><br><span class="line">    OBJC_TAG_NSString          = 2, </span><br><span class="line">    OBJC_TAG_NSNumber          = 3, </span><br><span class="line">    OBJC_TAG_NSIndexPath       = 4, </span><br><span class="line">    OBJC_TAG_NSManagedObjectID = 5, </span><br><span class="line">    OBJC_TAG_NSDate            = 6,</span><br></pre></td></tr></table></figure>
+（4）获取taggedpointer的所属类：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">#   define _OBJC_TAG_INDEX_SHIFT 1</span><br><span class="line">#define _OBJC_TAG_INDEX_MASK 0x7</span><br><span class="line">extern uintptr_t objc_debug_taggedpointer_obfuscator;</span><br><span class="line">uintptr_t sl_objc_getTaggedPointerTag(const void * _Nullable ptr)</span><br><span class="line">&#123;</span><br><span class="line">    uintptr_t value = objc_debug_taggedpointer_obfuscator ^ (uintptr_t)ptr;</span><br><span class="line">    uintptr_t basicTag = (value &gt;&gt; _OBJC_TAG_INDEX_SHIFT) &amp; _OBJC_TAG_INDEX_MASK;</span><br><span class="line">    return basicTag;</span><br><span class="line">&#125;</span><br><span class="line">extern Class objc_debug_taggedpointer_classes[];</span><br><span class="line">Class *sl_classSlotForBasicTagIndex(uintptr_t tag)</span><br><span class="line">&#123;</span><br><span class="line">    uintptr_t tagObfuscator = ((objc_debug_taggedpointer_obfuscator</span><br><span class="line">                                &gt;&gt; _OBJC_TAG_INDEX_SHIFT)</span><br><span class="line">                               &amp; _OBJC_TAG_INDEX_MASK);</span><br><span class="line">    uintptr_t obfuscatedTag = tag ^ tagObfuscator;</span><br><span class="line">    // Array index in objc_tag_classes includes the tagged bit itself</span><br><span class="line">    return &amp;objc_debug_taggedpointer_classes[(obfuscatedTag &lt;&lt; 1) | 1];</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        NSNumber *n = @123;</span><br><span class="line">        NSString *s = @&quot;123&quot;;</span><br><span class="line">        NSString *s_m_c = [[s mutableCopy] copy];</span><br><span class="line">        uintptr_t n_t = sl_objc_getTaggedPointerTag((__bridge void *)n);</span><br><span class="line">        uintptr_t s_m_c_t = sl_objc_getTaggedPointerTag((__bridge void *)s_m_c);</span><br><span class="line">        Class *n_t_c = sl_classSlotForBasicTagIndex(n_t);</span><br><span class="line">        Class *s_m_c_t_c = sl_classSlotForBasicTagIndex(s_m_c_t);</span><br><span class="line">        NSLog(@&quot;n&#x27;s Class is %@&quot;,*n_t_c);</span><br><span class="line">        NSLog(@&quot;s_m_c&#x27;s Clss is %@&quot;,*s_m_c_t_c);</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+log：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2019-07-04 10:58:05.075581+0800 AAA[11913:876264] n&#x27;s Class is __NSCFNumber</span><br><span class="line">2019-07-04 10:58:05.075754+0800 AAA[11913:876264] s_m_c&#x27;s Clss is NSTaggedPointerString</span><br></pre></td></tr></table></figure>
+看到上面的例子，或许我该露出张狂但又不失谦虚的笑容，因为一切都那么顺利，理论得到了印证。然而，真的是这么一回事吗？下面看一个不尽人意的例子。<br>（5）通过taggedpointer获取value：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">#   define _OBJC_TAG_PAYLOAD_LSHIFT 0</span><br><span class="line">#   define _OBJC_TAG_PAYLOAD_RSHIFT 4</span><br><span class="line">uintptr_t sl_objc_getTaggedPointerValue(const void * _Nullable ptr)</span><br><span class="line">&#123;</span><br><span class="line">    // assert(_objc_isTaggedPointer(ptr));</span><br><span class="line">    uintptr_t value = objc_debug_taggedpointer_obfuscator ^ (uintptr_t)ptr;</span><br><span class="line">//    uintptr_t basicTag = (value &gt;&gt; _OBJC_TAG_INDEX_SHIFT) &amp; _OBJC_TAG_INDEX_MASK;</span><br><span class="line">    return (value &lt;&lt; _OBJC_TAG_PAYLOAD_LSHIFT) &gt;&gt; _OBJC_TAG_PAYLOAD_RSHIFT;</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc, const char * argv[]) &#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        NSNumber *n = @123;</span><br><span class="line">        uintptr_t n_v = sl_objc_getTaggedPointerValue((__bridge void *)n);</span><br><span class="line">        NSLog(@&quot;hex(123) = 0x%x&quot;,123);</span><br><span class="line">        NSLog(@&quot;n&#x27;s value is 0x%lx&quot;,n_v);</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>log:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2019-07-04 11:14:59.639165+0800 AAA[11959:881845] hex(123) = 0x7b</span><br><span class="line">2019-07-04 11:14:59.639316+0800 AAA[11959:881845] n&#x27;s value is 0x7b2</span><br></pre></td></tr></table></figure>
+<p>是不是感觉有点不对劲？<br>换一个数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">NSNumber *n = [NSNumber numberWithLongLong:121111];</span><br><span class="line">        uintptr_t n_v = sl_objc_getTaggedPointerValue((__bridge void *)n);</span><br><span class="line">        NSLog(@&quot;hex(121111) = 0x%x&quot;,121111);</span><br><span class="line">        NSLog(@&quot;n&#x27;s value is 0x%lx&quot;,n_v);</span><br></pre></td></tr></table></figure>
+<p>log：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2019-07-04 11:18:03.279558+0800 AAA[11967:882991] hex(121111) = 0x1d917</span><br><span class="line">2019-07-04 11:18:03.279719+0800 AAA[11967:882991] n&#x27;s value is 0x1d9173</span><br></pre></td></tr></table></figure>
+<p>每次都发现算出来的value后面总是多一位。。。。<br>查了蛮多资料，只知道：<br><code>value的第1-4位是NSNumber的类型：比如，char是0、short是1、int是2、float是4。</code></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS%E5%BC%80%E5%8F%91/" rel="tag"><i class="fa fa-tag"></i> iOS开发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/28/block/" rel="next" title="block">
+                <i class="fa fa-chevron-left"></i> block
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/11/28/xcode-select-command/" rel="prev" title="xcode-select 命令">
+                xcode-select 命令 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">47</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%9D%A5%E6%BA%90"><span class="nav-number">1.</span> <span class="nav-text">问题来源</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%A2%E7%B4%A2%E5%8E%86%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">探索历程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E7%99%BE%E5%BA%A6"><span class="nav-number">2.1.</span> <span class="nav-text">1、百度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81Developer-Documention"><span class="nav-number">2.2.</span> <span class="nav-text">2、Developer Documention</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#runtime%E6%BA%90%E7%A0%81"><span class="nav-number">2.3.</span> <span class="nav-text">runtime源码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E8%B7%B5%EF%BC%88%E7%8E%AF%E5%A2%83%EF%BC%9AMAC%EF%BC%8C%E7%89%88%E6%9C%AC%EF%BC%9A10-14-5%EF%BC%89"><span class="nav-number">2.3.1.</span> <span class="nav-text">实践（环境：MAC，版本：10.14.5）</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">59.4k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

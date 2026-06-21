@@ -1,0 +1,13 @@
+{
+  "appName": "绿联声学",
+  "bundleId": "com.ugreen.iot",
+  "version": "2.4.8",
+  "buildNumber": "14",
+  "fileSize": "135.55 MiB",
+  "updatedAt": "2026-06-21 23:11:41",
+  "status": "published",
+  "installUrl": "https://sweetloser.com/ios-dist/ugreen-audio/2.4.8/14-df1d6f37/install.html",
+  "manifestUrl": "https://sweetloser.com/ios-dist/ugreen-audio/2.4.8/14-df1d6f37/manifest.plist",
+  "ipaUrl": "https://ffipa.oss-cn-hangzhou.aliyuncs.com/iot_audio.ipa",
+  "releaseNote": "Ad Hoc 测试分发版本，IPA 托管于阿里云 OSS。"
+}

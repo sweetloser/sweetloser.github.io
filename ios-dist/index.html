@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>iOS Ad Hoc 分发入口</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6b7280;
+      --line: #d9dde5;
+      --accent: #0f7a5f;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111315;
+        --panel: #191c20;
+        --text: #f5f7fa;
+        --muted: #a8b0bb;
+        --line: #30353d;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      line-height: 1.65;
+    }
+
+    main {
+      width: min(640px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>iOS Ad Hoc 分发入口</h1>
+    <p>这里不提供公开版本列表。请使用发布负责人提供的完整安装页链接访问指定版本。</p>
+    <p>路径格式：<code>/ios-dist/{app_key}/{version}/{build-random}/install.html</code></p>
+  </main>
+</body>
+</html>

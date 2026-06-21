@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /ios-dist/
+
+Sitemap: https://sweetloser.com/sitemap.xml

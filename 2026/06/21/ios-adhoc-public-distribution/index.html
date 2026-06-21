@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.gif?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="iOS," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="最近处理了一个很常见但又容易踩坑的需求：已经打好了 iOS Ad Hoc 包，怎么让测试、客户验收或演示同事通过一个外网链接安装？ 先说结论：Ad Hoc 外网分发并不是绕过 Apple 的安装限制，它只是把已经签名好的 IPA 放到一个可访问、可下线、可追踪的下载链路上。设备仍然必须提前登记到 Apple Developer 账号里，IPA 也必须使用包含这些设备的 Ad Hoc provisi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS Ad Hoc 外网分发实践">
+<meta property="og:url" content="https://www.sweetloser.com/2026/06/21/ios-adhoc-public-distribution/index.html">
+<meta property="og:site_name" content="SweetLoser Blog">
+<meta property="og:description" content="最近处理了一个很常见但又容易踩坑的需求：已经打好了 iOS Ad Hoc 包，怎么让测试、客户验收或演示同事通过一个外网链接安装？ 先说结论：Ad Hoc 外网分发并不是绕过 Apple 的安装限制，它只是把已经签名好的 IPA 放到一个可访问、可下线、可追踪的下载链路上。设备仍然必须提前登记到 Apple Developer 账号里，IPA 也必须使用包含这些设备的 Ad Hoc provisi">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-06-21T08:35:00.000Z">
+<meta property="article:modified_time" content="2026-06-21T08:30:49.227Z">
+<meta property="article:author" content="SweetLoser">
+<meta property="article:tag" content="iOS">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://www.sweetloser.com/2026/06/21/ios-adhoc-public-distribution/"/>
+
+
+
+
+
+  <title>iOS Ad Hoc 外网分发实践 | SweetLoser Blog</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SweetLoser Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">树叶的一生，难道只是为了归根吗</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://www.sweetloser.com/2026/06/21/ios-adhoc-public-distribution/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SweetLoser Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iOS Ad Hoc 外网分发实践</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2026-06-21T16:35:00+08:00">
+                2026-06-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2026/06/21/ios-adhoc-public-distribution/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2026/06/21/ios-adhoc-public-distribution/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  1.6k 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  6 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近处理了一个很常见但又容易踩坑的需求：已经打好了 iOS Ad Hoc 包，怎么让测试、客户验收或演示同事通过一个外网链接安装？</p>
+<p>先说结论：Ad Hoc 外网分发并不是绕过 Apple 的安装限制，它只是把已经签名好的 IPA 放到一个可访问、可下线、可追踪的下载链路上。设备仍然必须提前登记到 Apple Developer 账号里，IPA 也必须使用包含这些设备的 Ad Hoc provisioning profile 签名。</p>
+<h3 id="推荐方案"><a href="#推荐方案" class="headerlink" title="推荐方案"></a>推荐方案</h3><p>我更推荐的结构是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">静态安装页 + manifest.plist + 外部 IPA 托管</span><br></pre></td></tr></table></figure>
+
+<p>也就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">GitHub Pages / 静态站点</span><br><span class="line">  install.html</span><br><span class="line">  manifest.plist</span><br><span class="line">  icon.png</span><br><span class="line"></span><br><span class="line">对象存储 / CDN / GitHub Release</span><br><span class="line">  app.ipa</span><br></pre></td></tr></table></figure>
+
+<p>安装页负责展示版本信息和安装按钮，<code>manifest.plist</code> 负责告诉 iOS IPA 在哪里，IPA 本体则放到更适合大文件下载的地方。</p>
+<p>如果只是临时验证，并且 IPA 小于 100 MB，也可以短时间把 IPA 放在 GitHub Pages 目录里。但这不适合作为长期方案：包体会让仓库变重，下载量稍大也会碰到带宽和仓库文件大小限制。</p>
+<h3 id="安装原理"><a href="#安装原理" class="headerlink" title="安装原理"></a>安装原理</h3><p>iOS 网页安装 Ad Hoc 包依赖 <code>itms-services</code> 协议。安装页里一般放一个这样的链接：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&quot;itms-services://?action=download-manifest&amp;url=https%3A%2F%2Fexample.com%2Fios-dist%2Fcompany-app%2Fmanifest.plist&quot;</span>&gt;</span></span><br><span class="line">  安装 iOS 测试版</span><br><span class="line"><span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意几个细节：</p>
+<ol>
+<li><code>url=</code> 后面的 manifest 地址必须 URL Encode。</li>
+<li>manifest 地址必须是 HTTPS。</li>
+<li>manifest 里面的 IPA 地址也必须是 HTTPS。</li>
+<li>尽量让用户用 iPhone 或 iPad 的 Safari 打开。</li>
+<li>微信、企业 IM、邮件内置浏览器可能拦截安装动作。</li>
+</ol>
+<p>一个最小可用的 <code>manifest.plist</code> 大概是这样：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">plist</span> <span class="keyword">PUBLIC</span> <span class="string">&quot;-//Apple//DTD PLIST 1.0//EN&quot;</span></span></span><br><span class="line"><span class="meta"> <span class="string">&quot;https://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">plist</span> <span class="attr">version</span>=<span class="string">&quot;1.0&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dict</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">key</span>&gt;</span>items<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">array</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dict</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">key</span>&gt;</span>assets<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">array</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dict</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">key</span>&gt;</span>kind<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">string</span>&gt;</span>software-package<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">key</span>&gt;</span>url<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">string</span>&gt;</span>https://download.example.com/company-app/1.2.3/45/app.ipa<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dict</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">array</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">key</span>&gt;</span>metadata<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">dict</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">key</span>&gt;</span>bundle-identifier<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">string</span>&gt;</span>com.company.app<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">key</span>&gt;</span>bundle-version<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">string</span>&gt;</span>45<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">key</span>&gt;</span>kind<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">string</span>&gt;</span>software<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">key</span>&gt;</span>title<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">string</span>&gt;</span>Company App<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">dict</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dict</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">array</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dict</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plist</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="目录怎么设计"><a href="#目录怎么设计" class="headerlink" title="目录怎么设计"></a>目录怎么设计</h3><p>分发目录最好不要只用 App 名和版本号，因为这种路径太容易猜。</p>
+<p>我一般会加一个随机片段：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ios-dist/</span><br><span class="line">  company-app/</span><br><span class="line">    1.2.3/</span><br><span class="line">      45-a8f3c92d/</span><br><span class="line">        install.html</span><br><span class="line">        manifest.plist</span><br><span class="line">        icon.png</span><br><span class="line">        metadata.json</span><br></pre></td></tr></table></figure>
+
+<p>这样安装页地址可以是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://sweetloser.com/ios-dist/company-app/1.2.3/45-a8f3c92d/install.html</span><br></pre></td></tr></table></figure>
+
+<p>如果希望博客和分发页更干净地隔离，也可以用独立子域名：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://dist.sweetloser.com/company-app/1.2.3/45-a8f3c92d/install.html</span><br></pre></td></tr></table></figure>
+
+<p>独立子域名的好处是后续迁移方便。今天用 GitHub Pages，明天切对象存储、Cloudflare Pages、Vercel 或自建服务，链接结构不会和博客内容绑死。</p>
+<h3 id="为什么-IPA-不建议直接放-Pages"><a href="#为什么-IPA-不建议直接放-Pages" class="headerlink" title="为什么 IPA 不建议直接放 Pages"></a>为什么 IPA 不建议直接放 Pages</h3><p>GitHub Pages 非常适合放安装页、说明页、图标、manifest，但不适合作为长期 IPA 仓库。</p>
+<p>主要原因：</p>
+<ol>
+<li>IPA 是大文件，多版本保留后仓库会很快变大。</li>
+<li>GitHub 普通仓库会限制大文件，超过 100 MiB 就会很麻烦。</li>
+<li>GitHub Pages 更像静态站点托管，不是下载分发服务。</li>
+<li>对象存储和 CDN 在日志、限速、缓存、下线、生命周期清理方面更好用。</li>
+</ol>
+<p>所以长期方案里，我会让 Pages 只承担入口层，IPA 放对象存储、CDN、GitHub Release 或其他文件下载服务。</p>
+<h3 id="外网链接的安全边界"><a href="#外网链接的安全边界" class="headerlink" title="外网链接的安全边界"></a>外网链接的安全边界</h3><p>公开链接模式要接受一个事实：拿到链接的人都能访问。</p>
+<p>随机目录、<code>robots.txt</code>、<code>noindex</code> 只能降低被搜索和枚举的概率，它们不是权限控制。</p>
+<p>可以做的基础措施有：</p>
+<ol>
+<li>版本目录增加随机片段。</li>
+<li>不提供公开版本列表。</li>
+<li>安装页加 <code>&lt;meta name=&quot;robots&quot; content=&quot;noindex,nofollow&quot;&gt;</code>。</li>
+<li><code>robots.txt</code> 屏蔽分发目录。</li>
+<li>保留下载日志，关注异常 IP、异常下载量和异常 User-Agent。</li>
+<li>发现链接扩散后，立刻下线旧目录，重新生成随机目录。</li>
+</ol>
+<p>如果包内容敏感，或者分发对象很严格，就不要只依赖随机路径。那种场景应该加鉴权、短期签名 URL，或者使用更正式的内部分发平台。</p>
+<h3 id="发布前检查清单"><a href="#发布前检查清单" class="headerlink" title="发布前检查清单"></a>发布前检查清单</h3><p>每次发布前，我会按下面这份清单过一遍：</p>
+<ol>
+<li><code>install.html</code> 能通过 HTTPS 访问。</li>
+<li>安装链接里的 manifest URL 已 URL Encode。</li>
+<li><code>manifest.plist</code> 返回 200。</li>
+<li>manifest 里的 IPA URL 返回 200。</li>
+<li>IPA 使用 Ad Hoc 签名。</li>
+<li>目标设备 UDID 已包含在 provisioning profile 中。</li>
+<li>iPhone Safari 能点击安装。</li>
+<li>微信或企业 IM 内置浏览器有 Safari 打开提示。</li>
+<li>页面包含 <code>noindex,nofollow</code>。</li>
+<li>分发目录已被 <code>robots.txt</code> 屏蔽。</li>
+<li>旧版本下线后，旧安装页不能继续安装。</li>
+</ol>
+<h3 id="常见安装失败原因"><a href="#常见安装失败原因" class="headerlink" title="常见安装失败原因"></a>常见安装失败原因</h3><p>点击安装没有反应时，优先排查：</p>
+<ol>
+<li>是否使用 Safari 打开。</li>
+<li>manifest 是否 HTTPS。</li>
+<li>manifest 是否返回 200。</li>
+<li>IPA URL 是否返回 200。</li>
+<li>Bundle ID、版本号、title 是否填写正确。</li>
+<li>当前设备是否在 Ad Hoc 设备列表中。</li>
+<li>设备上是否已有同 Bundle ID 但签名不同的 App。</li>
+</ol>
+<p>如果页面和 manifest 都没问题，但仍然无法安装，最常见的原因就是设备没有被加入 Ad Hoc profile。外网分发链路只能负责下载，不能改变 iOS 的签名校验。</p>
+<h3 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h3><p>iOS Ad Hoc 外网分发最重要的不是页面多漂亮，而是链路稳定、路径清晰、能快速下线。</p>
+<p>我的推荐可以压缩成一句话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">安装页放静态站点，IPA 放对象存储或 CDN，路径加随机片段，发布前真机验证，下线时立刻断入口。</span><br></pre></td></tr></table></figure>
+
+<p>这样做足够轻，也足够稳。对于内部测试、客户验收和小范围演示，比一上来搭完整分发后台更合适。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag"><i class="fa fa-tag"></i> iOS</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2024/03/12/%E7%BC%96%E5%86%99LLVMPass/" rel="next" title="编写LLVM Pass">
+                <i class="fa fa-chevron-left"></i> 编写LLVM Pass
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.gif"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/">
+              
+                  <span class="site-state-item-count">47</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/sweetloser" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E8%8D%90%E6%96%B9%E6%A1%88"><span class="nav-number">1.</span> <span class="nav-text">推荐方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">安装原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E6%80%8E%E4%B9%88%E8%AE%BE%E8%AE%A1"><span class="nav-number">3.</span> <span class="nav-text">目录怎么设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-IPA-%E4%B8%8D%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5%E6%94%BE-Pages"><span class="nav-number">4.</span> <span class="nav-text">为什么 IPA 不建议直接放 Pages</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%96%E7%BD%91%E9%93%BE%E6%8E%A5%E7%9A%84%E5%AE%89%E5%85%A8%E8%BE%B9%E7%95%8C"><span class="nav-number">5.</span> <span class="nav-text">外网链接的安全边界</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E5%B8%83%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="nav-number">6.</span> <span class="nav-text">发布前检查清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E5%AE%89%E8%A3%85%E5%A4%B1%E8%B4%A5%E5%8E%9F%E5%9B%A0"><span class="nav-number">7.</span> <span class="nav-text">常见安装失败原因</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-number">8.</span> <span class="nav-text">最后</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SweetLoser</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">59.4k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'nsqlnUwzwCfJ7zrGNM69C5L8-gzGzoHsz',
+        appKey: 'zpCVIjqIeJa5OOs6Rgbl65eU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
